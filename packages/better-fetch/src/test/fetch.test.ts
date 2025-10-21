@@ -566,6 +566,19 @@ describe("url", () => {
 		expect(url.toString()).toBe("http://localhost:4001/param/%23test/item%201");
 	});
 
+	it("dynamic params should not collide with url", async () => {
+		const url = getURL("/v1/places:searchNearby", {
+			baseURL: "http://localhost:4000",
+			params: {
+				searchNearby: "test",
+			},
+		});
+
+		expect(url.toString()).toBe(
+			"http://localhost:4000/v1/places%3AsearchNearby",
+		);
+	});
+
 	it("should expand array values into multiple query parameters", () => {
 		const url = getURL("/test", {
 			query: {
