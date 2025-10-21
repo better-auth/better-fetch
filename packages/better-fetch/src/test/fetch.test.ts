@@ -295,6 +295,38 @@ describe("fetch", () => {
 			authorization: "Bearer test",
 		});
 	});
+
+	it("should set basic auth headers", async () => {
+		const url = getURL("post");
+		await betterFetch<any>(url, {
+			auth: {
+				type: "Basic",
+				username: "test-user",
+				password: "test-password",
+			},
+			onRequest: (req) => {
+				expect(req.headers.get("authorization")).to.equal(
+					"Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ=",
+				);
+			},
+		});
+	});
+
+	it("shet set basic auth headers with function for username and password", async () => {
+		const url = getURL("post");
+		await betterFetch<any>(url, {
+			auth: {
+				type: "Basic",
+				username: () => "test-user",
+				password: () => "test-password",
+			},
+			onRequest: (req) => {
+				expect(req.headers.get("authorization")).to.equal(
+					"Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ=",
+				);
+			},
+		});
+	});
 });
 
 describe("fetch-error", () => {
@@ -532,5 +564,40 @@ describe("url", () => {
 			baseURL: "http://localhost:4001",
 		});
 		expect(url.toString()).toBe("http://localhost:4001/param/%23test/item%201");
+	});
+
+	it("should expand array values into multiple query parameters", () => {
+		const url = getURL("/test", {
+			query: {
+				filterValue: ["admin", "user"],
+			},
+			baseURL: "http://localhost:4000",
+		});
+
+		expect(url.toString()).toBe(
+			"http://localhost:4000/test?filterValue=admin&filterValue=user",
+		);
+	});
+
+	it("should preserve objects as JSON strings", () => {
+		const url = getURL("/test", {
+			query: {
+				options: { page: 1, limit: 10 },
+			},
+			baseURL: "http://localhost:4000",
+		});
+
+		expect(url.toString()).toBe(
+			"http://localhost:4000/test?options=%7B%22page%22%3A1%2C%22limit%22%3A10%7D",
+		);
+	});
+
+	it("should leave strings untouched", () => {
+		const url = getURL("/test", {
+			query: { foo: "bar" },
+			baseURL: "http://localhost:4000",
+		});
+
+		expect(url.toString()).toBe("http://localhost:4000/test?foo=bar");
 	});
 });

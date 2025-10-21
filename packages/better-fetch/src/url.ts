@@ -29,7 +29,18 @@ export function getURL(url: string, option?: BetterFetchOption) {
 	const queryParams = new URLSearchParams(urlQuery);
 	for (const [key, value] of Object.entries(query || {})) {
 		if (value == null) continue;
-		queryParams.set(key, String(value));
+		let serializedValue;
+		if (typeof value === "string") {
+			serializedValue = value;
+		} else if (Array.isArray(value)) {
+			for (const val of value) {
+				queryParams.append(key, val);
+			}
+			continue;
+		} else {
+			serializedValue = JSON.stringify(value);
+		}
+		queryParams.set(key, serializedValue);
 	}
 	if (params) {
 		if (Array.isArray(params)) {
