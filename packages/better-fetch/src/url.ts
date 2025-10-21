@@ -56,7 +56,11 @@ export function getURL(url: string, option?: BetterFetchOption) {
 		}
 	}
 
-	path = path.split("/").map(encodeURIComponent).join("/");
+	path = path
+		.split("/")
+		// decode colon again so fetch doesn't break
+		.map((segment) => encodeURIComponent(segment).replace(/%3A/g, ":"))
+		.join("/");
 	if (path.startsWith("/")) path = path.slice(1);
 	let queryParamString = queryParams.toString();
 	queryParamString =

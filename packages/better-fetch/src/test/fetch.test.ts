@@ -575,7 +575,7 @@ describe("url", () => {
 		});
 
 		expect(url.toString()).toBe(
-			"http://localhost:4000/v1/places%3AsearchNearby",
+			"http://localhost:4000/v1/places:searchNearby",
 		);
 	});
 
