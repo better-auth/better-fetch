@@ -14,6 +14,7 @@ import {
 	isJSONParsable,
 	jsonParse,
 	parseStandardSchema,
+	ValidationError,
 } from "./utils";
 
 export const betterFetch = async <
@@ -127,10 +128,41 @@ export const betterFetch = async <
 		 */
 		if (context?.output) {
 			if (context.output && !context.disableValidation) {
-				successContext.data = await parseStandardSchema(
-					context.output as StandardSchemaV1,
-					successContext.data,
-				);
+				try {
+					successContext.data = await parseStandardSchema(
+						context.output as StandardSchemaV1,
+						successContext.data,
+					);
+				} catch (err) {
+					const validationError = err as ValidationError;
+
+					// Create validation error context for hooks
+					const validationErrorContext = {
+						response: response ?? Response.json({ error: validationError.message }),
+						request: context,
+						error: {
+							type: 'validation' as const,
+							issues: validationError.issues,
+							message: validationError.message,
+							status: response.status,
+							statusText: response.statusText,
+						},
+					};
+
+
+					if (options?.onError) {
+						await options.onError(validationErrorContext);
+					}
+
+					// Call all onError hooks with validation error
+					for (const onError of hooks.onError) {
+						if (onError) {
+							await onError(validationErrorContext);
+						}
+					}
+
+					throw validationError;
+				}
 			}
 		}
 
@@ -167,6 +199,7 @@ export const betterFetch = async <
 		request: context,
 		error: {
 			...errorObject,
+			type: 'http' as const,
 			status: response.status,
 			statusText: response.statusText,
 		},
