@@ -28,13 +28,13 @@ export type RemoveEmptyString<T> = T extends string
 	: T;
 
 export type InferParamPath<Path> =
-	Path extends `${infer _Start}:${infer Param}/${infer Rest}`
+	Path extends `${infer _Start}/:${infer Param}/${infer Rest}`
 		? {
 				[K in
 					| Param
 					| keyof InferParamPath<Rest> as RemoveEmptyString<K>]: string;
 			}
-		: Path extends `${infer _Start}:${infer Param}`
+		: Path extends `${infer _Start}/:${infer Param}`
 			? { [K in Param]: string }
 			: Path extends `${infer _Start}/${infer Rest}`
 				? InferParamPath<Rest>
