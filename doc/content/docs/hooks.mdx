@@ -28,17 +28,24 @@ const $fetch = createFetch({
 
 a callback function that will be called when a request is about to be made. The function will be called with the request context as an argument and it's expected to return the modified request context.
 
+You can use this hook to modify headers, add authentication, or log requests.
+
 ```ts twoslash title="fetch.ts"
 import { createFetch } from "@better-fetch/fetch";
 
 const $fetch = createFetch({
     baseURL: "http://localhost:3000",
     onRequest(context) {
-        // do something with the context
+        // Add or modify headers
+        context.headers.set("x-request-time", new Date().toISOString());
         return context;
     },
 })
 ```
+
+<Callout type="info">
+For type-safe header validation, see the [Headers](/docs/headers) documentation.
+</Callout>
 
 ## On Response
 
