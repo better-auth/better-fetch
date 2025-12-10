@@ -7,6 +7,7 @@ export type FetchSchema = {
 	query?: StandardSchemaV1;
 	params?: StandardSchemaV1<Record<string, unknown>> | undefined;
 	method?: Methods;
+	headers?: StandardSchemaV1<Record<string, unknown>>;
 };
 
 export type Methods = "get" | "post" | "put" | "patch" | "delete";
