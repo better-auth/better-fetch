@@ -601,3 +601,26 @@ describe("url", () => {
 		expect(url.toString()).toBe("http://localhost:4000/test?foo=bar");
 	});
 });
+
+describe("form data", async () => {
+	it("should parse json to form data", async () => {
+		const { data } = await betterFetch("/echo", {
+			body: {
+				name: "John Doe",
+				age: 30,
+			},
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			onRequest(context) {
+				console.log(context.body);
+			},
+			customFetchImpl: async (req, init) => {
+				return new Response(JSON.stringify(init?.body), {
+					status: 200,
+				});
+			},
+		});
+		expect(data).toBe("name=John+Doe&age=30");
+	});
+});
