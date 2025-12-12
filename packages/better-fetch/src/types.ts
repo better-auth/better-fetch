@@ -78,6 +78,13 @@ export type BetterFetchOption<
 			 */
 			query?: Query;
 			/**
+			 * When true, array query parameters are encoded as repeated keys 
+			 * (e.g. `?foo=a&foo=b&foo=c`) instead of JSON (`?foo=["a","b","c"]`).
+			 * 
+			 * @default false - Arrays are encoded as JSON by default.
+			 */
+			repeatArrayParams?: boolean;
+			/**
 			 * Dynamic parameters.
 			 *
 			 * If url is defined as /path/:id, params will be { id: string }
