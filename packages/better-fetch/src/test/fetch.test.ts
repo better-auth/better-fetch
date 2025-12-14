@@ -114,6 +114,18 @@ describe("fetch", () => {
 		expect(data?.body).to.deep.eq(message);
 	});
 
+	it("stringifies body when content-type is explicitly application/json", async () => {
+		const payload = { foo: "bar" };
+		const { data } = await $echo<any>("/echo", {
+			method: "POST",
+			body: payload,
+			headers: { "Content-Type": "application/json" },
+		});
+
+		expect(data?.body).toEqual(payload);
+		expect(data?.headers).to.include({ "content-type": "application/json" });
+	});
+
 	it("Bypass URLSearchParams body", async () => {
 		const data = new URLSearchParams({ foo: "bar" });
 		const { data: res } = await betterFetch<any>(getURL("post"), {
