@@ -327,6 +327,28 @@ describe("hooks", () => {
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
 
+	it("should call onError with cloneResponse enabled", async () => {
+		const onError = vi.fn();
+		const f = createFetch({
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify({ message: "Server Error" }), {
+					status: 500,
+				});
+			},
+			onError,
+			hookOptions: { cloneResponse: true },
+		});
+
+		const result = await f("/test");
+
+		expect(onError).toHaveBeenCalled();
+		expect(result.error).toMatchObject({
+			status: 500,
+			message: "Server Error",
+		});
+	});
+
 	it("works with a relative url and a custom fetch impl", async () => {
 		const onRequest = vi.fn();
 		const onResponse = vi.fn();
