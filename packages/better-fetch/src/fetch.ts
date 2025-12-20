@@ -1,5 +1,10 @@
 import { BetterFetchError } from "./error";
-import { initializePlugins } from "./plugins";
+import {
+	type ErrorContext,
+	type FetchHooks,
+	type RequestContext,
+	initializePlugins,
+} from "./plugins";
 import { createRetryStrategy } from "./retry";
 import type { StandardSchemaV1 } from "./standard-schema";
 import type { BetterFetchOption, BetterFetchResponse } from "./types";
@@ -15,6 +20,80 @@ import {
 	jsonParse,
 	parseStandardSchema,
 } from "./utils";
+
+type ErrorHandlerParams = {
+	errorContext: ErrorContext & { responseText?: string };
+	hooks: {
+		onError: Array<FetchHooks["onError"]>;
+		onRetry: Array<FetchHooks["onRetry"]>;
+	};
+	options?: BetterFetchOption;
+	url: string;
+	fetchFn: typeof betterFetch;
+	cloneResponse?: boolean;
+	throwError?: unknown;
+};
+
+async function handleError({
+	errorContext,
+	hooks,
+	options,
+	url,
+	fetchFn,
+	cloneResponse,
+	throwError,
+}: ErrorHandlerParams): Promise<{ data: null; error: unknown }> {
+	for (const onError of hooks.onError) {
+		if (onError) {
+			await onError({
+				...errorContext,
+				response:
+					cloneResponse && errorContext.response
+						? errorContext.response.clone()
+						: errorContext.response,
+			});
+		}
+	}
+
+	if (options?.retry) {
+		const retryStrategy = createRetryStrategy(options.retry);
+		const _retryAttempt = options.retryAttempt ?? 0;
+		if (
+			await retryStrategy.shouldAttemptRetry(
+				_retryAttempt,
+				errorContext.response ?? null,
+			)
+		) {
+			for (const onRetry of hooks.onRetry) {
+				if (onRetry && errorContext.response) {
+					await onRetry({
+						response: errorContext.response,
+						request: errorContext.request,
+					});
+				}
+			}
+			const delay = retryStrategy.getDelay(_retryAttempt);
+			await new Promise((resolve) => setTimeout(resolve, delay));
+			return await fetchFn(url, {
+				...options,
+				retryAttempt: _retryAttempt + 1,
+			});
+		}
+	}
+
+	if (options?.throw) {
+		throw new BetterFetchError(
+			errorContext.error.status,
+			errorContext.error.statusText,
+			throwError ?? errorContext.error,
+		);
+	}
+
+	return {
+		data: null,
+		error: errorContext.error,
+	};
+}
 
 export const betterFetch = async <
 	TRes extends Option["output"] extends StandardSchemaV1
@@ -73,7 +152,40 @@ export const betterFetch = async <
 	}
 
 	const { clearTimeout } = getTimeout(opts, controller);
-	let response = await fetch(context.url, context);
+
+	let response: Response;
+	try {
+		response = await fetch(context.url, context);
+	} catch (fetchError) {
+		clearTimeout();
+
+		const isAbortError =
+			fetchError instanceof DOMException && fetchError.name === "AbortError";
+		if (isAbortError) {
+			throw fetchError;
+		}
+
+		const networkError = {
+			status: 0,
+			statusText: "Network Error",
+			message:
+				fetchError instanceof Error ? fetchError.message : String(fetchError),
+			cause: fetchError,
+		};
+
+		return handleError({
+			errorContext: {
+				response: undefined,
+				request: context,
+				error: networkError,
+			},
+			hooks,
+			options,
+			url,
+			fetchFn: betterFetch,
+		}) as any;
+	}
+
 	clearTimeout();
 
 	const responseContext = {
@@ -158,61 +270,23 @@ export const betterFetch = async <
 	const responseText = await response.text();
 	const isJSONResponse = isJSONParsable(responseText);
 	const errorObject = isJSONResponse ? await parser(responseText) : null;
-	/**
-	 * Error Branch
-	 */
-	const errorContext = {
-		response,
-		responseText,
-		request: context,
-		error: {
-			...errorObject,
-			status: response.status,
-			statusText: response.statusText,
-		},
-	};
-	for (const onError of hooks.onError) {
-		if (onError) {
-			await onError({
-				...errorContext,
-				response: options?.hookOptions?.cloneResponse
-					? response.clone()
-					: response,
-			});
-		}
-	}
 
-	if (options?.retry) {
-		const retryStrategy = createRetryStrategy(options.retry);
-		const _retryAttempt = options.retryAttempt ?? 0;
-		if (await retryStrategy.shouldAttemptRetry(_retryAttempt, response)) {
-			for (const onRetry of hooks.onRetry) {
-				if (onRetry) {
-					await onRetry(responseContext);
-				}
-			}
-			const delay = retryStrategy.getDelay(_retryAttempt);
-			await new Promise((resolve) => setTimeout(resolve, delay));
-			return await betterFetch(url, {
-				...options,
-				retryAttempt: _retryAttempt + 1,
-			});
-		}
-	}
-
-	if (options?.throw) {
-		throw new BetterFetchError(
-			response.status,
-			response.statusText,
-			isJSONResponse ? errorObject : responseText,
-		);
-	}
-	return {
-		data: null,
-		error: {
-			...errorObject,
-			status: response.status,
-			statusText: response.statusText,
+	return handleError({
+		errorContext: {
+			response,
+			responseText,
+			request: context,
+			error: {
+				...errorObject,
+				status: response.status,
+				statusText: response.statusText,
+			},
 		},
-	} as any;
+		hooks,
+		options,
+		url,
+		fetchFn: betterFetch,
+		cloneResponse: options?.hookOptions?.cloneResponse,
+		throwError: isJSONResponse ? errorObject : responseText,
+	}) as any;
 };

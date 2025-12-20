@@ -1,6 +1,6 @@
-import type { StandardSchemaV1 } from "./standard-schema";
 import type { Schema } from "./create-fetch";
 import type { BetterFetchError } from "./error";
+import type { StandardSchemaV1 } from "./standard-schema";
 import type { BetterFetchOption } from "./types";
 
 export type RequestContext<T extends Record<string, any> = any> = {
@@ -20,9 +20,9 @@ export type SuccessContext<Res = any> = {
 	request: RequestContext;
 };
 export type ErrorContext = {
-	response: Response;
+	response?: Response;
 	request: RequestContext;
-	error: BetterFetchError & Record<string, any>;
+	error: { status: number; statusText: string } & Record<string, any>;
 };
 export interface FetchHooks<Res = any> {
 	/**
