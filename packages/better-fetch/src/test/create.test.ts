@@ -270,10 +270,8 @@ describe("create-fetch-type-test", () => {
 		const res = await $fetch("/", {
 			throw: true,
 		});
-		expectTypeOf(res).toMatchTypeOf<
-			{ message: string }
-		>();
-	})
+		expectTypeOf(res).toMatchTypeOf<{ message: string }>();
+	});
 
 	it("should return unknown if no output is defined", () => {
 		const res = $fetch("/");

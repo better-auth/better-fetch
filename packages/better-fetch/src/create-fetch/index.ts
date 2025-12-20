@@ -131,12 +131,16 @@ export const createFetch = <Option extends CreateFetchOption>(
 	config?: Option,
 ) => {
 	async function $fetch(url: string, options?: BetterFetchOption) {
-		const opts = {
-			...config,
-			...options,
-			headers: mergeHeaders(config?.headers, options?.headers),
-			plugins: [...(config?.plugins || []), applySchemaPlugin(config || {}), ...(options?.plugins || [])],
-		} as BetterFetchOption;
+			const opts = {
+				...config,
+				...options,
+				headers: mergeHeaders(config?.headers, options?.headers),
+				plugins: [
+					...(config?.plugins || []),
+					applySchemaPlugin(config || {}),
+					...(options?.plugins || []),
+				],
+			} as BetterFetchOption;
 
 		if (config?.catchAllError) {
 			try {
