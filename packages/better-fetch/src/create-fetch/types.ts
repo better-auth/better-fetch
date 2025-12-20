@@ -1,5 +1,5 @@
-import type { StandardSchemaV1 } from "../standard-schema";
 import type { BetterFetchPlugin } from "../plugins";
+import type { StandardSchemaV1 } from "../standard-schema";
 import type { Prettify, StringLiteralUnion } from "../type-utils";
 import type { BetterFetchOption, BetterFetchResponse } from "../types";
 import type { FetchSchema, Schema } from "./schema";
