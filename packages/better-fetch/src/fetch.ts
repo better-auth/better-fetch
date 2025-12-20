@@ -155,7 +155,10 @@ export const betterFetch = async <
 		} as any;
 	}
 	const parser = options?.jsonParser ?? jsonParse;
-	const responseText = await response.text();
+	const responseToRead = options?.hookOptions?.cloneResponse
+		? response.clone()
+		: response;
+	const responseText = await responseToRead.text();
 	const isJSONResponse = isJSONParsable(responseText);
 	const errorObject = isJSONResponse ? await parser(responseText) : null;
 	/**
