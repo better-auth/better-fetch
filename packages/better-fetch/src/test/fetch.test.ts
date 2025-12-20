@@ -413,6 +413,133 @@ describe("hooks", () => {
 	});
 });
 
+describe("network-errors", () => {
+	it("should call onError for network failures", async () => {
+		const onError = vi.fn();
+		const f = createFetch({
+			baseURL: "http://localhost:9999",
+			customFetchImpl: async () => {
+				throw new TypeError("fetch failed");
+			},
+			onError,
+		});
+
+		const result = await f("/test");
+
+		expect(onError).toHaveBeenCalledWith({
+			response: undefined,
+			request: expect.any(Object),
+			error: expect.objectContaining({
+				status: 0,
+				statusText: "Network Error",
+				message: "fetch failed",
+			}),
+		});
+		expect(result.data).toBeNull();
+		expect(result.error).toMatchObject({
+			status: 0,
+			statusText: "Network Error",
+			message: "fetch failed",
+		});
+	});
+
+	it("should return error object for network failures", async () => {
+		const f = createFetch({
+			baseURL: "http://localhost:9999",
+			customFetchImpl: async () => {
+				throw new TypeError("ECONNREFUSED");
+			},
+		});
+
+		const result = await f("/test");
+
+		expect(result.data).toBeNull();
+		expect(result.error).toMatchObject({
+			status: 0,
+			statusText: "Network Error",
+			message: "ECONNREFUSED",
+		});
+	});
+
+	it("should throw for network failures when throw: true", async () => {
+		const f = createFetch({
+			baseURL: "http://localhost:9999",
+			customFetchImpl: async () => {
+				throw new TypeError("fetch failed");
+			},
+			throw: true,
+		});
+
+		await expect(f("/test")).rejects.toThrow(BetterFetchError);
+
+		try {
+			await f("/test");
+		} catch (error) {
+			if (error instanceof BetterFetchError) {
+				expect(error.status).toBe(0);
+				expect(error.statusText).toBe("Network Error");
+			}
+		}
+	});
+
+	it("should retry on network failure", async () => {
+		let attempts = 0;
+		const f = createFetch({
+			baseURL: "http://localhost:9999",
+			customFetchImpl: async () => {
+				attempts++;
+				if (attempts < 3) {
+					throw new TypeError("fetch failed");
+				}
+				return new Response(JSON.stringify({ success: true }));
+			},
+			retry: 3,
+		});
+
+		const result = await f("/test");
+		expect(attempts).toBe(3);
+		expect(result.data).toEqual({ success: true });
+	});
+
+	it("should not call onSuccess for network failures", async () => {
+		const onSuccess = vi.fn();
+		const onError = vi.fn();
+		const f = createFetch({
+			baseURL: "http://localhost:9999",
+			customFetchImpl: async () => {
+				throw new TypeError("fetch failed");
+			},
+			onSuccess,
+			onError,
+		});
+
+		await f("/test");
+		expect(onSuccess).not.toHaveBeenCalled();
+		expect(onError).toHaveBeenCalled();
+	});
+
+	it("should include original error in cause", async () => {
+		const originalError = new TypeError("ECONNREFUSED");
+		const onError = vi.fn();
+		const f = createFetch({
+			baseURL: "http://localhost:9999",
+			customFetchImpl: async () => {
+				throw originalError;
+			},
+			onError,
+		});
+
+		await f("/test");
+		expect(onError).toHaveBeenCalledWith(
+			expect.objectContaining({
+				error: expect.objectContaining({
+					cause: originalError,
+				}),
+			}),
+		);
+	});
+});
+
 describe("fetch-error-throw", () => {
 	const f = createFetch({
 		baseURL: "http://localhost:4001",

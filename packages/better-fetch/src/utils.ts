@@ -1,6 +1,6 @@
-import type { StandardSchemaV1 } from "./standard-schema";
 import { getAuthHeader } from "./auth";
 import { methods } from "./create-fetch";
+import type { StandardSchemaV1 } from "./standard-schema";
 import type { BetterFetchOption, FetchEsque } from "./types";
 
 const JSON_RE = /^application\/(?:[\w!#$%&*.^`~-]*\+)?json(;.+)?$/i;
