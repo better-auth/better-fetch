@@ -1,9 +1,11 @@
 import { createApp, toNodeListener } from "h3";
 import { type Listener, listen } from "listhen";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { BetterFetchError, betterFetch, createFetch } from "..";
+import { BetterFetchError, betterFetch, createFetch, createSchema } from "..";
 import { getURL } from "../url";
 import { router } from "./test-router";
+import { z } from "zod";
+import { ValidationError } from "../utils";
 
 describe("fetch", () => {
 	const getURL = (path?: string) =>
@@ -387,6 +389,7 @@ describe("hooks", () => {
 			response: expect.any(Response),
 			responseText: '{"message":"Server Error"}',
 			error: {
+				type: "http",
 				message: "Server Error",
 				status: 500,
 				statusText: "",
@@ -622,5 +625,411 @@ describe("form data", async () => {
 			},
 		});
 		expect(data).toBe("name=John+Doe&age=30");
+	});
+});
+
+
+describe("validation", () => {
+	it("should call onError hook for output validation failures", async () => {
+		const onErrorSpy = vi.fn();
+
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify({ invalid: "data" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+			onError: onErrorSpy,
+		});
+
+		try {
+			await $fetch("/test", {
+				output: z.object({
+					id: z.number(),
+					name: z.string(),
+				}),
+			});
+		} catch (_) {
+			// Ignore
+		} finally {
+			expect(onErrorSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: expect.objectContaining({
+						type: "validation",
+						issues: expect.any(Array),
+						message: expect.any(String),
+					}),
+					request: expect.any(Object),
+					response: expect.any(Object),
+				})
+			);
+		}
+	});
+
+	it("should call onError hook for schema-based output validation failures", async () => {
+		const onErrorSpy = vi.fn();
+
+		const $fetch = createFetch({
+			schema: createSchema({
+				"/user": {
+					output: z.object({
+						id: z.number(),
+						name: z.string(),
+					}),
+				},
+			}),
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify({ invalid: "data" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+			onError: onErrorSpy,
+		});
+
+		try {
+			await $fetch("/user");
+		} catch (_) {
+			// Ignore
+		} finally {
+			expect(onErrorSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: expect.objectContaining({
+						type: "validation",
+						issues: expect.any(Array),
+					}),
+				})
+			);
+		}
+	});
+
+	it("should handle input validation failures for body schema", async () => {
+		const onErrorSpy = vi.fn();
+
+		const $fetch = createFetch({
+			schema: createSchema({
+				"/user": {
+					input: z.object({
+						name: z.string(),
+						age: z.number(),
+					}),
+					output: z.object({
+						id: z.number(),
+						name: z.string(),
+						age: z.number(),
+					}),
+				},
+			}),
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify({ id: 1, name: "John", age: 30 }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+			onError: onErrorSpy,
+		});
+
+		// Input validation should throw since we can't proceed without valid input
+		await expect($fetch("/user", {
+			body: { name: "John", age: "invalid" as any }, // age should be number
+		})).rejects.toThrow(ValidationError);
+	});
+
+	it("should handle input validation failures for params schema", async () => {
+		const onErrorSpy = vi.fn();
+
+		const $fetch = createFetch({
+			schema: createSchema({
+				"/user/:id": {
+					params: z.object({
+						id: z.number(),
+					}),
+					output: z.object({
+						id: z.number(),
+						name: z.string(),
+					}),
+				},
+			}),
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify({ id: 1, name: "John" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+			onError: onErrorSpy,
+		});
+
+		// Params validation should throw since we can't proceed without valid params
+		await expect($fetch("/user/:id", {
+			params: { id: "invalid" as any }, // id should be number
+		})).rejects.toThrow(ValidationError);
+	});
+
+	it("should handle input validation failures for query schema", async () => {
+		const onErrorSpy = vi.fn();
+
+		const $fetch = createFetch({
+			schema: createSchema({
+				"/users": {
+					query: z.object({
+						page: z.number(),
+						limit: z.number(),
+					}),
+					output: z.array(z.object({
+						id: z.number(),
+						name: z.string(),
+					})),
+				},
+			}),
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify([{ id: 1, name: "John" }]), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+			onError: onErrorSpy,
+		});
+
+		// Query validation should throw since we can't proceed without valid query
+		await expect($fetch("/users", {
+			query: { page: "invalid" as any, limit: 10 }, // page should be number
+		})).rejects.toThrow(ValidationError);
+	});
+
+	it("should work with catchAllError option for input validation failures", async () => {
+		const onErrorSpy = vi.fn();
+
+		const $fetch = createFetch({
+			schema: createSchema({
+				"/user": {
+					input: z.object({
+						name: z.string(),
+						age: z.number(),
+					}),
+					output: z.object({
+						id: z.number(),
+						name: z.string(),
+						age: z.number(),
+					}),
+				},
+			}),
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify({ id: 1, name: "John", age: 30 }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+			onError: onErrorSpy,
+			catchAllError: true, // This should catch validation errors and wrap them
+		});
+
+		const result = await $fetch("/user", {
+			body: { name: "John", age: "invalid" as any }, // age should be number
+		});
+
+		// With catchAllError, validation errors should be wrapped in the response
+		expect(result.error).toEqual(
+			expect.objectContaining({
+				status: 500,
+				statusText: "Fetch Error",
+				message: expect.stringContaining("catchAllError"),
+				error: expect.any(ValidationError),
+			})
+		);
+		expect(result.data).toBeNull();
+	});
+
+	it("should still throw validation errors when throw: true", async () => {
+		const onErrorSpy = vi.fn();
+
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			throw: true,
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify({ invalid: "data" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+			onError: onErrorSpy,
+		});
+
+		await expect($fetch("/test", {
+			output: z.object({
+				id: z.number(),
+				name: z.string(),
+			}),
+		})).rejects.toThrow(ValidationError);
+
+		expect(onErrorSpy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				error: expect.objectContaining({
+					type: "validation",
+				}),
+			})
+		);
+	});
+
+	it("should distinguish between HTTP and validation errors in onError hook", async () => {
+		const onErrorSpy = vi.fn();
+
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async (url) => {
+				if (url.toString().includes("http-error")) {
+					return new Response(JSON.stringify({ error: "Not found" }), {
+						status: 404,
+						headers: { "content-type": "application/json" },
+					});
+				}
+				return new Response(JSON.stringify({ invalid: "data" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+			onError: onErrorSpy,
+		});
+
+		// Test HTTP error
+		await $fetch("/http-error");
+		expect(onErrorSpy).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				error: expect.objectContaining({
+					type: "http",
+					status: 404,
+				}),
+			})
+		);
+
+		onErrorSpy.mockClear();
+
+		try {
+			// Test validation error
+			await $fetch("/validation-error", {
+				output: z.object({
+					id: z.number(),
+				}),
+			});
+		} catch(_) {
+			// Ignore
+		} finally {
+			expect(onErrorSpy).toHaveBeenLastCalledWith(
+				expect.objectContaining({
+					error: expect.objectContaining({
+						type: "validation",
+						issues: expect.any(Array),
+					}),
+				})
+			);
+		}
+
+	});
+
+	it("should preserve backward compatibility when no hooks are defined", async () => {
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify({ invalid: "data" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+		});
+
+		const fetch =  $fetch("/test", {
+			output: z.object({
+				id: z.number(),
+				name: z.string(),
+			}),
+		});
+
+		expect(fetch).rejects.toThrowError(ValidationError);
+	});
+
+	it("should call multiple onError hooks for validation errors", async () => {
+		const onError1 = vi.fn();
+		const onError2 = vi.fn();
+
+		const plugin1 = {
+			id: "plugin1",
+			name: "Plugin 1",
+			hooks: { onError: onError1 },
+		};
+
+		const plugin2 = {
+			id: "plugin2",
+			name: "Plugin 2",
+			hooks: { onError: onError2 },
+		};
+
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify({ invalid: "data" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+			plugins: [plugin1, plugin2],
+		});
+
+		try {
+		await $fetch("/test", {
+				output: z.object({
+					id: z.number(),
+				}),
+			});
+		} catch (_) {
+			// Ignore
+		} finally {
+			expect(onError1).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: expect.objectContaining({
+						type: "validation",
+					}),
+				})
+			);
+
+			expect(onError2).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: expect.objectContaining({
+						type: "validation",
+					}),
+				})
+			);
+		}
+	});
+
+	it("should not call onError hook when validation is disabled", async () => {
+		const onErrorSpy = vi.fn();
+
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => {
+				return new Response(JSON.stringify({ invalid: "data" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			},
+			onError: onErrorSpy,
+		});
+
+		const result = await $fetch("/test", {
+			output: z.object({
+				id: z.number(),
+			}),
+			disableValidation: true,
+		});
+
+		expect(onErrorSpy).not.toHaveBeenCalled();
+		expect(result.data).toEqual({ invalid: "data" });
+		expect(result.error).toBeNull();
 	});
 });

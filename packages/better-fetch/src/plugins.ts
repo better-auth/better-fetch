@@ -19,11 +19,27 @@ export type SuccessContext<Res = any> = {
 	response: Response;
 	request: RequestContext;
 };
-export type ErrorContext = {
+export type ValidationErrorContext = {
 	response: Response;
 	request: RequestContext;
-	error: BetterFetchError & Record<string, any>;
+	error: {
+		type: 'validation';
+		issues: ReadonlyArray<StandardSchemaV1.Issue>;
+		message: string;
+		status?: number;
+		statusText?: string;
+	};
 };
+
+export type HttpErrorContext = {
+	response: Response;
+	request: RequestContext;
+	error: BetterFetchError & Record<string, any> & {
+		type: 'http';
+	};
+};
+
+export type ErrorContext = HttpErrorContext | ValidationErrorContext;
 export interface FetchHooks<Res = any> {
 	/**
 	 * a callback function that will be called when a

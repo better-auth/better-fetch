@@ -3,7 +3,7 @@ title: Hooks
 description: Hooks
 ---
 
-Hooks are functions that are called at different stages of the request lifecycle. 
+Hooks are functions that are called at different stages of the request lifecycle.
 
 ```ts twoslash title="fetch.ts"
 import { createFetch } from "@better-fetch/fetch";
@@ -57,7 +57,7 @@ import { createFetch } from "@better-fetch/fetch";
 
 const $fetch = createFetch({
     baseURL: "http://localhost:3000",
-    onResponse(context) {        
+    onResponse(context) {
         // do something with the context
         return context.response // return the response
     },
@@ -68,6 +68,7 @@ const $fetch = createFetch({
 ## On Success and On Error
 
 on success and on error are callbacks that will be called when a request is successful or when an error occurs. The function will be called with the response context as an argument and it's not expeceted to return anything.
+If schema validation fails, the `onError` hook will be called as well.
 
 ```ts twoslash title="fetch.ts"
 import { createFetch } from "@better-fetch/fetch";
@@ -79,6 +80,45 @@ const $fetch = createFetch({
     },
     onError(context) {
         // do something with the context
+        // console.log(context.error.type); // "validation" | "http"
     },
 })
+```
+
+### Error Types
+
+The `onError` hook receives different error types depending on what caused the error:
+
+#### HTTP Errors
+When an HTTP request fails (non-2xx status codes), the error context contains:
+
+```ts
+{
+  response: Response,
+  request: RequestContext,
+  error: {
+    type: "http",
+    status: number,
+    statusText: string,
+    // ... other response data
+  },
+  responseText: string
+}
+```
+
+#### Validation Errors
+When schema validation fails on the response data, the error context contains:
+
+```ts
+{
+  response: Response,
+  request: RequestContext,
+  error: {
+    type: "validation",
+    issues: Array<ValidationIssue>,
+    message: string,
+    status: number,
+    statusText: string,
+  }
+}
 ```
