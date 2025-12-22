@@ -1,6 +1,6 @@
 {
 	"name": "@better-fetch/fetch",
-	"version": "1.1.19-beta.1",
+	"version": "1.1.21",
 	"main": "./dist/index.cjs",
 	"type": "module",
 	"module": "./dist/index.js",
