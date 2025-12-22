@@ -169,7 +169,7 @@ export const initializePlugins = async (
 	}
 	for (const plugin of options?.plugins || []) {
 		if (plugin.init) {
-			const pluginRes = await plugin.init?.(url.toString(), options);
+			const pluginRes = await plugin.init?.(url.toString(), opts);
 			opts = pluginRes.options || opts;
 			url = pluginRes.url;
 		}
