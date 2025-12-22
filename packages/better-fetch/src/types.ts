@@ -5,15 +5,21 @@ import { StandardSchemaV1 } from "./standard-schema";
 import type { Prettify, StringLiteralUnion } from "./type-utils";
 
 type CommonHeaders = {
-	accept: "application/json" | "text/plain" | "application/octet-stream";
-	"content-type":
+	accept?: StringLiteralUnion<"application/json" | "text/plain" | "application/octet-stream">;
+	"content-type"?: StringLiteralUnion<
 		| "application/json"
 		| "text/plain"
 		| "application/x-www-form-urlencoded"
 		| "multipart/form-data"
-		| "application/octet-stream";
-	authorization: "Bearer" | "Basic";
+		| "application/octet-stream"
+	>;
+	authorization?: StringLiteralUnion<`Bearer ${string}` | `Basic ${string}`>;
 };
+
+export type CustomHeaders<T extends Record<string, string> = {}> = Prettify<
+	CommonHeaders & T & Record<string, string | undefined>
+>;
+
 export type FetchEsque = (
 	input: string | URL | globalThis.Request,
 	init?: RequestInit,
@@ -29,9 +35,10 @@ export type BetterFetchOption<
 	Params extends Record<string, any> | Array<string> | undefined = any,
 	Res = any,
 	ExtraOptions extends Record<string, any> = {},
+	Headers extends Record<string, string> = {},
 > = Prettify<
 	ExtraOptions &
-		Omit<RequestInit, "body"> &
+		Omit<RequestInit, "body" | "headers"> &
 		FetchHooks<Res> & {
 			/**
 			 * a timeout that will be used to abort the
@@ -68,7 +75,7 @@ export type BetterFetchOption<
 			/**
 			 * Headers
 			 */
-			headers?: CommonHeaders | Headers | HeadersInit;
+			headers?: CustomHeaders<Headers> | Headers;
 			/**
 			 * Body
 			 */

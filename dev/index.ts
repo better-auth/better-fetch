@@ -1,23 +1,37 @@
-import { betterFetch, createFetch, createSchema } from "@better-fetch/fetch";
+import { createFetch, createSchema } from "@better-fetch/fetch";
 import { z } from "zod";
-
+ 
 const $fetch = createFetch({
-	schema: createSchema({
-		"@patch/user": {
-			input: z.object({
-				id: z.string(),
+    baseURL: "https://jsonplaceholder.typicode.com",
+    schema: createSchema({
+        "/path": {
+            input: z.object({
+                userId: z.string(),
+                id: z.number(),
+                title: z.string(),
+                completed: z.boolean(),
+            }),
+			headers: z.object({
+				"x-custom-header": z.string(),
 			}),
-		},
-	}),
-	baseURL: "http://localhost:3000",
-	onRequest(context) {
-		console.log("onRequest", JSON.parse(context.body));
+        },
+    }), 
+	auth: {
+		type: "Bearer",
+		token:"test-token",
+	}
+})
+ 
+const { data, error } = await $fetch("/path", {
+    body: {
+        userId: "1",
+        id: 1,
+        title: "title",
+        completed: true,
+    },
+	headers: {
+		"x-custom-header": "custom-value",
 	},
-});
+})
 
-const f = $fetch("https://jsonplaceholder.typicode.com/todos/:id", {
-	method: "GET",
-	params: {
-		id: "1",
-	},
-});
+console.log(data, error);

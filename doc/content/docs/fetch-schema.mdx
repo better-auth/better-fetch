@@ -47,9 +47,13 @@ const $fetch = createFetch({
 ## Fetch Schema
 
 The Fetch Schema is a map of path/url and schema. The path is the url path and the schema is an object with 
-`input`, `output`, `query` and `params` keys.
+`input`, `output`, `query`, `params`, and `headers` keys.
 
-The `input` key is the schema of the request data. The `output` key is the schema of the response data. The `query` key is the schema of the query params. The `params` key is dynamic path parameters.
+The `input` key is the schema of the request data. The `output` key is the schema of the response data. The `query` key is the schema of the query params. The `params` key is dynamic path parameters. The `headers` key is for header validation.
+
+<Callout type="info">
+For detailed information about header validation and types, see the [Headers](/docs/headers) documentation.
+</Callout>
 
 ### Input
 
@@ -142,6 +146,38 @@ const { data, error } = await $fetch("/path", {
 })
 // @annotate: Hover over the data object to see the type
 ```
+
+### Headers
+
+The headers schema is the schema of the request headers. You can define header validation using Zod or any StandardSchema library.
+
+```ts title="fetch.ts"
+import { createFetch, createSchema } from "@better-fetch/fetch";
+import { z } from "zod";
+
+const $fetch = createFetch({
+    baseURL: "http://localhost:3000",
+    schema: createSchema({
+        "/api/users": {
+            headers: z.object({
+                "x-api-key": z.string(),
+                "x-user-id": z.string().uuid(),
+            }),
+        },
+    }),
+})
+
+const { data } = await $fetch("/api/users", {
+    headers: {
+        "x-api-key": "my-key",
+        "x-user-id": "123e4567-e89b-12d3-a456-426614174000",
+    },
+})
+```
+
+<Callout type="info">
+Header keys should be defined in lowercase for case-insensitive matching. See [Headers](/docs/headers) for more details.
+</Callout>
 
 ### Dynamic Path Parameters
 

@@ -100,13 +100,15 @@ Learn more about handling errors [Handling Errors](/docs/handling-errors) sectio
 
 ### Fetch Schema
 
-Fetch schema enables you to pre-define the URL path and the shape of request and response data. This makes it easy to document your API. 
+Fetch schema enables you to pre-define the URL path and the shape of request and response data, including headers, query parameters, and path parameters. This makes it easy to document your API. 
 
 <Callout type="info">
    Plugins can also define fetch schemas. See [Plugins](/docs/plugins) section for more details.
 </Callout>
 
 The output of the schema will be validated using your schema and if the validation fails, it'll throw an error.
+
+You can validate headers, request body, query params, and more. See [Fetch Schema](/docs/fetch-schema) and [Headers](/docs/headers) for more details.
 
 ```ts twoslash title="fetch.ts" 
 import { createSchema, createFetch } from "@better-fetch/fetch";

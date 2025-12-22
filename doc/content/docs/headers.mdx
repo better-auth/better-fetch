@@ -1,0 +1,301 @@
+---
+title: Headers
+description: Type-safe headers with validation and aggregation
+---
+{/* has to be migrated to twoslash after better-fetch release */}
+
+Better Fetch provides type-safe headers with validation support using Zod or any StandardSchema library. Headers are properly aggregated from multiple sources and validated at runtime.
+
+## Basic Usage
+
+You can set headers at three different levels: configuration, schema, and request level.
+
+### Configuration Level Headers
+
+Headers set at the configuration level are applied to all requests:
+
+```ts title="fetch.ts"
+import { createFetch } from "@better-fetch/fetch";
+
+const $fetch = createFetch({
+    baseURL: "http://localhost:3000",
+    headers: {
+        "x-api-key": "my-api-key",
+        "x-client-version": "1.0.0",
+    },
+})
+```
+
+### Request Level Headers
+
+Headers can be set on individual requests:
+
+```ts title="fetch.ts"
+import { betterFetch } from "@better-fetch/fetch";
+
+const { data, error } = await betterFetch("http://localhost:3000/api/users", {
+    headers: {
+        "x-request-id": "unique-request-id",
+    },
+})
+```
+
+## Schema-Based Header Validation
+
+You can define header schemas using Zod or any StandardSchema library. This provides runtime validation and type inference.
+
+```ts title="fetch.ts"
+import { createFetch, createSchema } from "@better-fetch/fetch";
+import { z } from "zod";
+
+const $fetch = createFetch({
+    baseURL: "http://localhost:3000",
+    schema: createSchema({
+        "/api/users": {
+            headers: z.object({
+                "x-user-id": z.string().uuid(),
+                "x-api-version": z.string().regex(/^\d+\.\d+\.\d+$/),
+            }),
+        },
+    }),
+})
+
+// This will validate headers at runtime
+const { data, error } = await $fetch("/api/users", {
+    headers: {
+        "x-user-id": "123e4567-e89b-12d3-a456-426614174000",
+        "x-api-version": "1.0.0",
+    },
+})
+```
+
+<Callout type="warning">
+Header keys in schemas should be defined in **lowercase** (e.g., `"x-custom-header"`) to ensure case-insensitive matching. However, you can pass headers in any casing when making requests.
+</Callout>
+
+## Header Aggregation
+
+Headers are merged in the following order (later overrides earlier):
+
+1. **Configuration headers** - Set in `createFetch({ headers: ... })`
+2. **Schema headers** - Validated against the schema definition
+3. **Request headers** - Set on individual requests
+
+```ts title="fetch.ts"
+import { createFetch, createSchema } from "@better-fetch/fetch";
+import { z } from "zod";
+
+const $fetch = createFetch({
+    baseURL: "http://localhost:3000",
+    headers: {
+        "x-api-key": "config-key", // Applied to all requests
+    },
+    schema: createSchema({
+        "/api/data": {
+            headers: z.object({
+                "x-tenant-id": z.string(),
+            }),
+        },
+    }),
+})
+
+// Final headers will include: x-api-key, x-tenant-id, and x-request-id
+const { data } = await $fetch("/api/data", {
+    headers: {
+        "x-tenant-id": "tenant-123",
+        "x-request-id": "req-456", // Additional header
+    },
+})
+```
+
+## Case-Insensitive Headers
+
+HTTP headers are case-insensitive by specification. Better Fetch handles this automatically:
+
+```ts title="fetch.ts"
+import { createFetch, createSchema } from "@better-fetch/fetch";
+import { z } from "zod";
+
+const $fetch = createFetch({
+    schema: createSchema({
+        "/api/users": {
+            headers: z.object({
+                "x-custom-header": z.string(), // Define in lowercase
+            }),
+        },
+    }),
+})
+
+// All of these will work correctly:
+await $fetch("/api/users", {
+    headers: { "x-custom-header": "value" },
+})
+
+await $fetch("/api/users", {
+    headers: { "X-Custom-Header": "value" },
+})
+
+await $fetch("/api/users", {
+    headers: { "X-CUSTOM-HEADER": "value" },
+})
+```
+
+<Callout type="info">
+Headers are normalized to lowercase internally before validation, ensuring consistent behavior regardless of how they're passed.
+</Callout>
+
+## Validation Errors
+
+When headers don't match the schema, Better Fetch throws a detailed validation error:
+
+```ts title="fetch.ts"
+import { createFetch, createSchema } from "@better-fetch/fetch";
+import { z } from "zod";
+
+const $fetch = createFetch({
+    schema: createSchema({
+        "/api/users": {
+            headers: z.object({
+                "x-user-id": z.string().uuid(),
+            }),
+        },
+    }),
+})
+
+try {
+    await $fetch("/api/users", {
+        headers: {
+            "x-user-id": "invalid-uuid", // Will fail validation
+        },
+    })
+} catch (error) {
+    console.error(error.message)
+    // Error: [
+    //   {
+    //     "code": "invalid_string",
+    //     "validation": "uuid",
+    //     "path": ["x-user-id"],
+    //     "message": "Invalid uuid"
+    //   }
+    // ]
+}
+```
+
+## Optional Headers
+
+You can make headers optional in your schema:
+
+```ts title="fetch.ts"
+import { createFetch, createSchema } from "@better-fetch/fetch";
+import { z } from "zod";
+
+const $fetch = createFetch({
+    schema: createSchema({
+        "/api/users": {
+            headers: z.object({
+                "x-user-id": z.string(),
+                "x-trace-id": z.string().optional(), // Optional header
+            }),
+        },
+    }),
+})
+
+// This works without x-trace-id
+await $fetch("/api/users", {
+    headers: {
+        "x-user-id": "user-123",
+    },
+})
+```
+
+## Type Safety
+
+Headers defined in schemas provide type inference:
+
+```ts title="fetch.ts"
+import { createFetch, createSchema } from "@better-fetch/fetch";
+import { z } from "zod";
+
+const $fetch = createFetch({
+    schema: createSchema({
+        "/api/users": {
+            headers: z.object({
+                "x-user-id": z.string(),
+                "x-role": z.enum(["admin", "user"]),
+            }),
+        },
+    }),
+})
+
+await $fetch("/api/users", {
+    headers: {
+        "x-user-id": "123",
+        "x-role": "admin", // TypeScript knows the valid values
+    },
+})
+```
+
+## Common Patterns
+
+### API Key Authentication
+
+```ts title="fetch.ts"
+import { createFetch } from "@better-fetch/fetch";
+
+const $fetch = createFetch({
+    baseURL: "https://api.example.com",
+    headers: {
+        "x-api-key": process.env.API_KEY || "",
+    },
+})
+```
+
+### Version Headers
+
+```ts title="fetch.ts"
+import { createFetch, createSchema } from "@better-fetch/fetch";
+import { z } from "zod";
+
+const $fetch = createFetch({
+    baseURL: "https://api.example.com",
+    headers: {
+        "x-api-version": "2024-01-01",
+    },
+    schema: createSchema({
+        "/api/v2/users": {
+            headers: z.object({
+                "x-client-version": z.string(),
+            }),
+        },
+    }),
+})
+```
+
+### Request Tracing
+
+```ts title="fetch.ts"
+import { createFetch } from "@better-fetch/fetch";
+import { v4 as uuidv4 } from "uuid";
+
+const $fetch = createFetch({
+    baseURL: "https://api.example.com",
+    onRequest(context) {
+        if (!context.headers.has("x-request-id")) {
+            context.headers.set("x-request-id", uuidv4());
+        }
+    },
+})
+```
+
+## Best Practices
+
+1. **Use lowercase for schema keys**: Define header names in lowercase in your schemas for consistent case-insensitive matching.
+
+2. **Validate security headers**: Use schemas to ensure security-critical headers are always present and valid.
+
+3. **Global vs Request headers**: Put common headers (API keys, versions) in configuration, request-specific headers (trace IDs) in individual requests.
+
+4. **Type inference**: Leverage TypeScript's type inference from Zod schemas for better developer experience.
+
+5. **Error handling**: Always handle validation errors gracefully, especially for user-provided header values.
+
