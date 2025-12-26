@@ -105,17 +105,12 @@ export async function getHeaders(opts?: BetterFetchOption) {
 	const headers = new Headers();
 	
 	if (opts?.headers) {
-		if (opts.headers instanceof Headers) {
-			opts.headers.forEach((value, key) => {
-				headers.set(key, value);
-			});
-		} else {
-			for (const [key, value] of Object.entries(opts.headers)) {
-				if (value !== null && value !== undefined) {
-					headers.set(key, value);
-				}
-			}
-		}
+		const source = opts.headers instanceof Headers
+			? opts.headers
+			: new Headers(opts.headers as HeadersInit);
+		source.forEach((value, key) => {
+			headers.set(key, value);
+		});
 	}
 	
 	const authHeader = await getAuthHeader(opts);
@@ -213,14 +208,9 @@ export function getBody(options?: BetterFetchOption) {
 		return null;
 	}
 
-	let headers: Headers | null = null;
-	if (options?.headers) {
-		if (options.headers instanceof Headers) {
-			headers = options.headers;
-		} else if (typeof options.headers === "object") {
-			headers = new Headers(options.headers as Record<string, string>);
-		}
-	}
+	const headers = options?.headers
+		? new Headers(options.headers as HeadersInit)
+		: null;
 
 	const hasContentType = headers?.has("content-type") ?? false;
 
