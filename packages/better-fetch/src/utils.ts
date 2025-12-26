@@ -209,23 +209,23 @@ export function detectContentType(body: any) {
 }
 
 export function getBody(options?: BetterFetchOption) {
-	if (!options?.body) {
+	if (options === null || options === undefined || options.body === null || options.body === undefined) {
 		return null;
 	}
-	
-	let hasContentType = false;
-	if (options?.headers) {
+
+	let headers: Headers | null = null;
+	if (options.headers !== null && options.headers !== undefined) {
 		if (options.headers instanceof Headers) {
-			hasContentType = options.headers.has("content-type");
+			headers = options.headers;
 		} else if (typeof options.headers === "object") {
-			hasContentType = "content-type" in options.headers && 
-				options.headers["content-type"] !== null && 
-				options.headers["content-type"] !== undefined;
+			headers = new Headers(options.headers as Record<string, string>);
 		}
 	}
-	
+
+	const hasContentType = headers !== null && headers.has("content-type");
+
 	if (isJSONSerializable(options.body) && !hasContentType) {
-		for (const [key, value] of Object.entries(options?.body)) {
+		for (const [key, value] of Object.entries(options.body)) {
 			if (value instanceof Date) {
 				options.body[key] = value.toISOString();
 			}
@@ -234,6 +234,7 @@ export function getBody(options?: BetterFetchOption) {
 	}
 
 	if (
+		headers !== null &&
 		headers.has("content-type") &&
 		headers.get("content-type") === "application/x-www-form-urlencoded"
 	) {
