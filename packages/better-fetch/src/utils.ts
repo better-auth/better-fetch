@@ -209,12 +209,12 @@ export function detectContentType(body: any) {
 }
 
 export function getBody(options?: BetterFetchOption) {
-	if (options === null || options === undefined || options.body === null || options.body === undefined) {
+	if (!options?.body) {
 		return null;
 	}
 
 	let headers: Headers | null = null;
-	if (options.headers !== null && options.headers !== undefined) {
+	if (options?.headers) {
 		if (options.headers instanceof Headers) {
 			headers = options.headers;
 		} else if (typeof options.headers === "object") {
@@ -222,10 +222,10 @@ export function getBody(options?: BetterFetchOption) {
 		}
 	}
 
-	const hasContentType = headers !== null && headers.has("content-type");
+	const hasContentType = headers?.has("content-type") ?? false;
 
 	if (isJSONSerializable(options.body) && !hasContentType) {
-		for (const [key, value] of Object.entries(options.body)) {
+		for (const [key, value] of Object.entries(options?.body)) {
 			if (value instanceof Date) {
 				options.body[key] = value.toISOString();
 			}
@@ -233,11 +233,7 @@ export function getBody(options?: BetterFetchOption) {
 		return JSON.stringify(options.body);
 	}
 
-	if (
-		headers !== null &&
-		headers.has("content-type") &&
-		headers.get("content-type") === "application/x-www-form-urlencoded"
-	) {
+	if (headers?.get("content-type") === "application/x-www-form-urlencoded") {
 		if (isJSONSerializable(options.body)) {
 			return new URLSearchParams(options.body).toString();
 		}
