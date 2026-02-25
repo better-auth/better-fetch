@@ -21,7 +21,7 @@ export default function HomePage() {
 							Docs
 						</Button>
 					</Link>
-					<Link href="https://github.com/bekacru/better-fetch">
+					<Link href="https://github.com/better-auth/better-fetch">
 						<Button className="flex gap-2" variant="secondary">
 							<Icons.github />
 							Github
