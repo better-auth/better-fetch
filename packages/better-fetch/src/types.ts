@@ -97,7 +97,7 @@ export type BetterFetchOption<
 			/**
 			 * Duplex mode
 			 */
-			duplex?: "full" | "half";
+			duplex?: "half";
 			/**
 			 * Custom JSON parser
 			 */
