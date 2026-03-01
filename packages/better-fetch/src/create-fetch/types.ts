@@ -44,21 +44,39 @@ export type InferParam<Path, Param> = Param extends StandardSchemaV1
 	? StandardSchemaV1.InferInput<Param>
 	: InferParamPath<Path>;
 
-export type InferOptions<T extends FetchSchema, Key, Res = any> = WithRequired<
-	BetterFetchOption<
-		InferBody<T["input"]>,
-		InferQuery<T["query"]>,
-		InferParam<Key, T["params"]>,
-		Res
-	>,
-	RequiredOptionKeys<T, Key> extends keyof BetterFetchOption
-		? RequiredOptionKeys<T, Key>
-		: never
->;
+export type InferOptions<T extends FetchSchema, Key, Res = any> = T["headers"] extends StandardSchemaV1
+	? WithRequired<
+			Omit<BetterFetchOption<
+				InferBody<T["input"]>,
+				InferQuery<T["query"]>,
+				InferParam<Key, T["params"]>,
+				Res
+			>, "headers"> & {
+				headers?: InferHeaders<T["headers"]>
+			},
+			RequiredOptionKeys<T, Key> extends keyof BetterFetchOption
+				? RequiredOptionKeys<T, Key>
+				: never
+		>
+	: WithRequired<
+			BetterFetchOption<
+				InferBody<T["input"]>,
+				InferQuery<T["query"]>,
+				InferParam<Key, T["params"]>,
+				Res
+			>,
+			RequiredOptionKeys<T, Key> extends keyof BetterFetchOption
+				? RequiredOptionKeys<T, Key>
+				: never
+		>;
 
 export type InferQuery<Q> = Q extends StandardSchemaV1
 	? StandardSchemaV1.InferInput<Q>
 	: any;
+
+export type InferHeaders<H> = H extends StandardSchemaV1
+	? StandardSchemaV1.InferInput<H>
+	: Record<string, string>;
 
 export type IsFieldOptional<T> = T extends StandardSchemaV1
 	? undefined extends T
@@ -80,12 +98,15 @@ export type IsOptionRequired<T extends FetchSchema, Key> = IsFieldOptional<
 		? true
 		: IsParamOptional<T["params"], Key> extends false
 			? true
-			: false;
+			: IsFieldOptional<T["headers"]> extends false
+				? true
+				: false;
 
 export type RequiredOptionKeys<T extends FetchSchema, Key> =
 	| (IsFieldOptional<T["input"]> extends false ? "body" : never)
 	| (IsFieldOptional<T["query"]> extends false ? "query" : never)
-	| (IsParamOptional<T["params"], Key> extends false ? "params" : never);
+	| (IsParamOptional<T["params"], Key> extends false ? "params" : never)
+	| (IsFieldOptional<T["headers"]> extends false ? "headers" : never);
 
 export type InferKey<S> = S extends Schema
 	? S["config"]["strict"] extends true

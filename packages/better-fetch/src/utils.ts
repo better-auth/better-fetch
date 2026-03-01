@@ -102,11 +102,27 @@ export function isRouteMethod(method?: string) {
 }
 
 export async function getHeaders(opts?: BetterFetchOption) {
-	const headers = new Headers(opts?.headers);
+	const headers = new Headers();
+	
+	if (opts?.headers) {
+		if (opts.headers instanceof Headers) {
+			opts.headers.forEach((value, key) => {
+				headers.set(key, value);
+			});
+		} else {
+			for (const [key, value] of Object.entries(opts.headers)) {
+				if (value !== null && value !== undefined) {
+					headers.set(key, value);
+				}
+			}
+		}
+	}
+	
 	const authHeader = await getAuthHeader(opts);
 	for (const [key, value] of Object.entries(authHeader || {})) {
 		headers.set(key, value);
 	}
+	
 	if (!headers.has("content-type")) {
 		const t = detectContentType(opts?.body);
 		if (t) {
@@ -196,12 +212,26 @@ export function getBody(options?: BetterFetchOption) {
 	if (!options?.body) {
 		return null;
 	}
-	const headers = new Headers(options?.headers);
-	const contentType = headers.get("content-type");
-	const isJSONContentType = contentType && JSON_RE.test(contentType);
+	let contentType: string | undefined = undefined;
+	if (options?.headers) {
+		if (options.headers instanceof Headers) {
+			contentType = options.headers.get("content-type") ?? undefined;
+		} else if (typeof options.headers === "object") {
+			if (
+				"content-type" in options.headers &&
+				options.headers["content-type"] !== null &&
+				options.headers["content-type"] !== undefined
+			) {
+				contentType = options.headers["content-type"];
+			}
+		}
+	}
+
+	const hasContentType = contentType !== undefined;
+	const isJSONContentType = contentType !== undefined && JSON_RE.test(contentType);
 	if (
 		isJSONSerializable(options.body) &&
-		(!headers.has("content-type") || isJSONContentType)
+		(!hasContentType || isJSONContentType)
 	) {
 		for (const [key, value] of Object.entries(options?.body)) {
 			if (value instanceof Date) {
