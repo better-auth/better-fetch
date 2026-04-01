@@ -65,6 +65,27 @@ const $fetch = createFetch({
 });
 ```
 
+### `logFormat`
+
+Controls the format of log messages.
+
+- `"default"` — each log line includes the HTTP method, URL, status code, and duration so parallel requests are easy to tell apart.
+- `"legacy"` — the original format from `<= v1.1.x`.
+
+```ts title="fetch.ts"
+import { createFetch } from "@better-fetch/fetch";
+import { logger } from "@better-fetch/logger";
+
+const $fetch = createFetch({
+    baseURL: "http://localhost:3000",
+    plugins: [
+        logger({
+            logFormat: "legacy",
+        }),
+    ],
+});
+```
+
 ### `verbose`
 
 Enable or disable verbose mode.
