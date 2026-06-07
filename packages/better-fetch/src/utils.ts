@@ -208,42 +208,29 @@ export function detectContentType(body: any) {
 	return null;
 }
 
-export function getBody(options?: BetterFetchOption) {
-	if (!options?.body) {
+function getMediaType(headers: Headers): string | null {
+	const contentType = headers.get("content-type");
+	return contentType ? contentType.split(";")[0].trim().toLowerCase() : null;
+}
+
+export function getBody(
+	options: BetterFetchOption,
+	headers: Headers,
+): BodyInit | null {
+	const { body } = options;
+	if (!body) {
 		return null;
 	}
-	
-	let hasContentType = false;
-	if (options?.headers) {
-		if (options.headers instanceof Headers) {
-			hasContentType = options.headers.has("content-type");
-		} else if (typeof options.headers === "object") {
-			hasContentType = "content-type" in options.headers && 
-				options.headers["content-type"] !== null && 
-				options.headers["content-type"] !== undefined;
-		}
+	if (!isJSONSerializable(body)) {
+		return body as BodyInit;
 	}
-	
-	if (isJSONSerializable(options.body) && !hasContentType) {
-		for (const [key, value] of Object.entries(options?.body)) {
-			if (value instanceof Date) {
-				options.body[key] = value.toISOString();
-			}
-		}
-		return JSON.stringify(options.body);
+	if (typeof body === "string") {
+		return body;
 	}
-
-	if (
-		headers.has("content-type") &&
-		headers.get("content-type") === "application/x-www-form-urlencoded"
-	) {
-		if (isJSONSerializable(options.body)) {
-			return new URLSearchParams(options.body).toString();
-		}
-		return options.body;
+	if (getMediaType(headers) === "application/x-www-form-urlencoded") {
+		return new URLSearchParams(body as Record<string, string>).toString();
 	}
-
-	return options.body;
+	return JSON.stringify(body);
 }
 
 export function getMethod(url: string, options?: BetterFetchOption) {
