@@ -2,3 +2,8 @@ packages:
   - 'packages/*'
   - 'doc'
   - "dev"
+allowBuilds:
+  '@biomejs/biome': false
+  simple-git-hooks: true
+  es5-ext: false
+  esbuild: true

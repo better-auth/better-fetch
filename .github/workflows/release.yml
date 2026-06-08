@@ -4,42 +4,56 @@ on:
     tags:
       - 'v*'
 
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   release:
+    environment: release
     permissions:
       contents: write
       id-token: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         name: Install pnpm
         with:
-          version: 9
           run_install: false
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
-          node-version: 20
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Check version
         id: check_version
         run: |
           tag=$(echo ${GITHUB_REF#refs/tags/})
           if [[ $tag == *"beta"* ]]; then
-            echo "::set-output name=tag::beta"
+            echo "tag=beta" >> "$GITHUB_OUTPUT"
           elif [[ $tag == *"alpha"* ]]; then
-            echo "::set-output name=tag::alpha"
+            echo "tag=alpha" >> "$GITHUB_OUTPUT"
           else
-            echo "::set-output name=tag::latest"
+            # Releases with the 'latest' npm tag must be on the main branch
+            git fetch origin main
+            if git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+              echo "tag=latest" >> "$GITHUB_OUTPUT"
+            else
+              echo "::error ::Releases with the 'latest' npm tag must be on the main branch."
+              exit 1
+            fi
           fi
 
       - name: Build
@@ -51,6 +65,4 @@ jobs:
             GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
       - name: Publish to npm
-        run: pnpm -r publish --access public --no-git-checks --tag ${{steps.check_version.outputs.tag}}
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+        run: pnpm -r publish --provenance --access public --no-git-checks --tag ${{steps.check_version.outputs.tag}}
