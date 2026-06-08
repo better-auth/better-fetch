@@ -1,6 +1,11 @@
 {
 	"name": "@better-fetch/logger",
 	"version": "1.1.21",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/better-auth/better-fetch.git",
+		"directory": "packages/logger"
+	},
 	"type": "module",
 	"description": "",
 	"main": "./dist/index.cjs",
