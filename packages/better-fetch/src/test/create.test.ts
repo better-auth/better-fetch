@@ -78,8 +78,8 @@ describe("create-fetch-runtime-test", () => {
 			port: 4001,
 		});
 	});
-	afterAll(() => {
-		listener.close().catch(console.error);
+	afterAll(async () => {
+		await listener.close();
 	});
 
 	it("should merge baseURL and url", async () => {
@@ -92,7 +92,7 @@ describe("create-fetch-runtime-test", () => {
 				});
 			},
 		});
-		$fetch("/echo", {
+		await $fetch("/echo", {
 			baseURL: "http://localhost:4001",
 			body: { id: 1 },
 			onRequest(context) {
@@ -138,7 +138,7 @@ describe("create-fetch-runtime-test", () => {
 				return new Response();
 			},
 		});
-		expect(f("/post")).rejects.toThrowError(ValidationError);
+		await expect(f("/post")).rejects.toThrowError(ValidationError);
 	});
 
 	it("should parse params and other inputs", async () => {

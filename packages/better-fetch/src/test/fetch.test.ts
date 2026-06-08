@@ -2,7 +2,6 @@ import { createApp, toNodeListener } from "h3";
 import { type Listener, listen } from "listhen";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { BetterFetchError, betterFetch, createFetch } from "..";
-import { getURL } from "../url";
 import { router } from "./test-router";
 
 describe("fetch", () => {
@@ -13,88 +12,74 @@ describe("fetch", () => {
 
 	beforeAll(async () => {
 		const app = createApp().use(router);
-		listener = await listen(toNodeListener(app), {
-			port: 4000,
-		});
+		listener = await listen(toNodeListener(app), { port: 4000 });
 	});
 
 	afterAll(async () => {
-		await listener.close().catch(console.error);
+		await listener.close();
 	});
 
-	const $echo = createFetch({
-		baseURL: getURL(),
-	});
+	const $echo = createFetch({ baseURL: getURL() });
 
-	it("ok", async () => {
-		expect((await betterFetch(getURL("ok"))).data).to.equal("ok");
+	it("returns the response body", async () => {
+		const { data } = await betterFetch(getURL("ok"));
+		expect(data).toBe("ok");
 	});
 
 	it("returns a blob for binary content-type", async () => {
 		const { data } = await betterFetch<Blob>(getURL("binary"));
-		expect(data).to.has.property("size");
+		expect(data).toHaveProperty("size");
 	});
 
-	it("baseURL", async () => {
-		const { data } = await betterFetch("/ok", {
-			baseURL: getURL(),
-		});
-		expect(data).to.equal("ok");
+	it("prepends baseURL to a relative url", async () => {
+		const { data } = await betterFetch("/ok", { baseURL: getURL() });
+		expect(data).toBe("ok");
 	});
 
-	it("stringifies posts body automatically", async () => {
-		const res = await betterFetch<{ body: { num: number } }>(getURL("post"), {
+	it("stringifies an object body automatically", async () => {
+		const { data } = await betterFetch<{ body: { num: number } }>(
+			getURL("post"),
+			{ method: "POST", body: { num: 42 } },
+		);
+		expect(data?.body).toEqual({ num: 42 });
+	});
+
+	it("stringifies an array body automatically", async () => {
+		const { data } = await betterFetch<{ body: { num: number }[] }>(
+			getURL("post"),
+			{ method: "POST", body: [{ num: 42 }, { num: 43 }] },
+		);
+		expect(data?.body).toEqual([{ num: 42 }, { num: 43 }]);
+	});
+
+	it.each([
+		{ name: "array of tuples", headers: [["X-header", "1"]] as HeadersInit },
+		{ name: "plain object", headers: { "x-header": "1" } as HeadersInit },
+		{ name: "Headers instance", headers: new Headers({ "x-header": "1" }) },
+	])("sends custom headers given a $name", async ({ headers }) => {
+		const { data } = await betterFetch<any>(getURL("post"), {
 			method: "POST",
 			body: { num: 42 },
+			headers,
 		});
-		expect(res.data?.body).toEqual({ num: 42 });
-		const res2 = await betterFetch<any>(getURL("post"), {
-			method: "POST",
-			body: [{ num: 42 }, { num: 43 }],
+		expect(data.headers).toMatchObject({
+			"x-header": "1",
+			"content-type": "application/json",
 		});
-		expect(res2.data?.body).toEqual([{ num: 42 }, { num: 43 }]);
 	});
 
-	it("should work with headers", async () => {
-		const headerFetches = [
-			[["X-header", "1"]],
-			{ "x-header": "1" },
-			new Headers({ "x-header": "1" }),
-		];
-
-		for (const sentHeaders of headerFetches) {
-			const res2 = await betterFetch<any>(getURL("post"), {
-				method: "POST",
-				body: { num: 42 },
-				headers: sentHeaders as HeadersInit,
-			});
-
-			expect(res2.data.headers).to.include({ "x-header": "1" });
-			expect(res2.data.headers).to.include({
-				"content-type": "application/json",
-			});
-		}
+	it.each<Record<string, string>>([
+		{ foo: "bar" },
+		{ foo: "bar", bar: "baz" },
+	])("forwards query params %o", async (query) => {
+		const { data } = await betterFetch<any>(getURL("query"), {
+			method: "GET",
+			query,
+		});
+		expect(data).toMatchObject(query);
 	});
 
-	it("should work with query params", async () => {
-		const queries = [
-			{ foo: "bar" },
-			{
-				foo: "bar",
-				bar: "baz",
-			},
-		];
-
-		for (const query of queries) {
-			const response = await betterFetch<any>(getURL("query"), {
-				method: "GET",
-				query,
-			});
-			expect(response.data).toMatchObject(query);
-		}
-	});
-
-	it("does not stringify body when content type != application/json", async () => {
+	it("does not stringify the body when content-type is not json", async () => {
 		const message = '"Hallo von Pascal"';
 		const { data } = await $echo<any>("/echo", {
 			method: "POST",
@@ -104,61 +89,51 @@ describe("fetch", () => {
 		expect(data?.body).toEqual(message);
 	});
 
-	it("Handle Buffer body", async () => {
+	it("passes a Buffer body through untouched", async () => {
 		const message = "Hallo von Pascal";
 		const { data } = await $echo<any>("/echo", {
 			method: "POST",
-			body: Buffer.from("Hallo von Pascal"),
+			body: Buffer.from(message),
 			headers: { "Content-Type": "text/plain" },
 		});
-		expect(data?.body).to.deep.eq(message);
+		expect(data?.body).toEqual(message);
 	});
 
-	it("Bypass URLSearchParams body", async () => {
-		const data = new URLSearchParams({ foo: "bar" });
-		const { data: res } = await betterFetch<any>(getURL("post"), {
+	it("passes a URLSearchParams body through untouched", async () => {
+		const { data } = await betterFetch<any>(getURL("post"), {
 			method: "POST",
-			body: data,
+			body: new URLSearchParams({ foo: "bar" }),
 		});
-		expect(res.body).toMatchObject({ foo: "bar" });
+		expect(data.body).toMatchObject({ foo: "bar" });
 	});
 
-	it("404", async () => {
+	it("returns a structured error for a 404", async () => {
 		const { error, data } = await betterFetch<
-			{
-				test: string;
-			},
-			{
-				statusCode: number;
-				stack: [];
-				statusMessage: string;
-			}
+			{ test: string },
+			{ statusCode: number; stack: []; statusMessage: string }
 		>(getURL("404"));
 
-		expect(error).to.deep.eq({
+		expect(error).toEqual({
 			statusCode: 404,
 			statusMessage: "Cannot find any path matching /404.",
 			stack: [],
 			status: 404,
 			statusText: "Cannot find any path matching /404.",
 		});
-		expect(data).toBe(null);
+		expect(data).toBeNull();
 	});
 
-	it("204 no content", async () => {
+	it("returns an empty body for a 204 response", async () => {
 		const { data } = await betterFetch(getURL("204"));
-
-		expect(data).toEqual("");
+		expect(data).toBe("");
 	});
 
-	it("HEAD no content", async () => {
-		const { data } = await betterFetch(getURL("ok"), {
-			method: "HEAD",
-		});
-		expect(data).toEqual("");
+	it("returns an empty body for a HEAD request", async () => {
+		const { data } = await betterFetch(getURL("ok"), { method: "HEAD" });
+		expect(data).toBe("");
 	});
 
-	it("should retry on error", async () => {
+	it("retries the configured number of times on error", async () => {
 		let count = 0;
 		await betterFetch(getURL("error"), {
 			retry: 3,
@@ -169,36 +144,29 @@ describe("fetch", () => {
 		expect(count).toBe(4);
 	});
 
-	it("should retry with linear delay", async () => {
+	it("waits a linear delay between retries", async () => {
 		let count = 0;
-
 		const beforeCall = Date.now();
 		let lastCallTime = 0;
 
-		const fetchPromise = betterFetch(getURL("error"), {
-			retry: {
-				type: "linear",
-				attempts: 3,
-				delay: 200,
-			},
+		await betterFetch(getURL("error"), {
+			retry: { type: "linear", attempts: 3, delay: 200 },
 			onError() {
 				count++;
 				lastCallTime = Date.now();
 			},
 		});
 
-		await fetchPromise;
-
 		expect(count).toBe(4);
 		expect(lastCallTime - beforeCall).toBeGreaterThanOrEqual(200 * 3);
 	});
 
-	it("should retry with exponential backoff and increasing delays", async () => {
+	it("increases the delay with exponential backoff", async () => {
 		let count = 0;
 		const delays: number[] = [];
 		let lastCallTime = 0;
 
-		const fetchPromise = betterFetch(getURL("error"), {
+		await betterFetch(getURL("error"), {
 			retry: {
 				type: "exponential",
 				attempts: 3,
@@ -215,113 +183,81 @@ describe("fetch", () => {
 			},
 		});
 
-		await fetchPromise;
-
 		expect(count).toBe(4);
-
 		expect(delays[1]).toBeGreaterThan(delays[0]);
 		expect(delays[2]).toBeGreaterThan(delays[1]);
-
 		expect(delays[0]).toBeGreaterThanOrEqual(100);
 		expect(delays[1]).toBeGreaterThanOrEqual(200);
 		expect(delays[2]).toBeGreaterThanOrEqual(400);
 	});
 
-	it("abort with retry", () => {
+	it("rejects when an already-aborted signal is passed", async () => {
 		const controller = new AbortController();
-		async function abortHandle() {
-			controller.abort();
-			const response = await betterFetch("", {
+		controller.abort();
+		await expect(
+			betterFetch("", {
 				baseURL: getURL("ok"),
 				retry: 3,
 				signal: controller.signal,
-			});
-		}
-		expect(abortHandle()).rejects.toThrow(/aborted/);
+			}),
+		).rejects.toThrow(/aborted/);
 	});
 
-	it("should work with params", async () => {
-		const response = await betterFetch(getURL("param/:id"), {
-			params: ["2"],
-		});
-		expect(response.data).toBe("/param/2");
+	it("resolves a dynamic path param", async () => {
+		const { data } = await betterFetch(getURL("param/:id"), { params: ["2"] });
+		expect(data).toBe("/param/2");
 	});
 
-	it("should work with params", async () => {
-		const response = await betterFetch(getURL("param/:id"), {
-			params: ["2"],
-		});
-		expect(response.data).toBe("/param/2");
+	it("resolves the http method from a method modifier prefix", async () => {
+		const baseURL = getURL();
+		const post = await betterFetch("@post/method", { baseURL });
+		expect(post.data).toBe("POST");
+		const get = await betterFetch("@get/method", { baseURL });
+		expect(get.data).toBe("GET");
 	});
 
-	it("should work with method modifier string", async () => {
-		const url = getURL();
-		const response = await betterFetch("@post/method", {
-			baseURL: url,
-		});
-		expect(response.data).toBe("POST");
-		const response2 = await betterFetch("@get/method", {
-			baseURL: url,
-		});
-		expect(response2.data).toBe("GET");
-	});
-
-	it("should set auth headers", async () => {
-		const url = getURL("post");
-		const res = await betterFetch<any>(url, {
-			auth: {
-				type: "Bearer",
-				token: "test",
-			},
+	it("sets a Bearer auth header", async () => {
+		const { data } = await betterFetch<any>(getURL("post"), {
 			method: "POST",
+			auth: { type: "Bearer", token: "test" },
 		});
-
-		expect(res.data.headers).to.include({
-			authorization: "Bearer test",
-		});
+		expect(data.headers).toMatchObject({ authorization: "Bearer test" });
 	});
 
-	it("should work with async auth token", async () => {
-		const url = getURL("post");
-		const res = await betterFetch<any>(url, {
-			auth: {
-				type: "Bearer",
-				token: async () => "test",
-			},
+	it("sets a Bearer auth header from an async token", async () => {
+		const { data } = await betterFetch<any>(getURL("post"), {
 			method: "POST",
+			auth: { type: "Bearer", token: async () => "test" },
 		});
-
-		expect(res.data.headers).to.include({
-			authorization: "Bearer test",
-		});
+		expect(data.headers).toMatchObject({ authorization: "Bearer test" });
 	});
 
-	it("should set basic auth headers", async () => {
-		const url = getURL("post");
-		await betterFetch<any>(url, {
+	it("sets a Basic auth header from username and password", async () => {
+		expect.hasAssertions();
+		await betterFetch<any>(getURL("post"), {
 			auth: {
 				type: "Basic",
 				username: "test-user",
 				password: "test-password",
 			},
 			onRequest: (req) => {
-				expect(req.headers.get("authorization")).to.equal(
+				expect(req.headers.get("authorization")).toBe(
 					"Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ=",
 				);
 			},
 		});
 	});
 
-	it("shet set basic auth headers with function for username and password", async () => {
-		const url = getURL("post");
-		await betterFetch<any>(url, {
+	it("sets a Basic auth header from username and password resolvers", async () => {
+		expect.hasAssertions();
+		await betterFetch<any>(getURL("post"), {
 			auth: {
 				type: "Basic",
 				username: () => "test-user",
 				password: () => "test-password",
 			},
 			onRequest: (req) => {
-				expect(req.headers.get("authorization")).to.equal(
+				expect(req.headers.get("authorization")).toBe(
 					"Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ=",
 				);
 			},
@@ -332,27 +268,22 @@ describe("fetch", () => {
 describe("fetch-error", () => {
 	const f = createFetch({
 		baseURL: "http://localhost:4001",
-		customFetchImpl: async (req, init) => {
-			return new Response(null, {
-				status: 500,
-			});
-		},
+		customFetchImpl: async () => new Response(null, { status: 500 }),
 		throw: true,
 	});
-	it("should throw if the response is not ok", async () => {
+
+	it("throws a BetterFetchError when the response is not ok", async () => {
 		await expect(f("/ok")).rejects.toThrowError(BetterFetchError);
 	});
 });
 
 describe("hooks", () => {
-	it("should call onRequest and onResponse", async () => {
+	it("calls onRequest and onResponse", async () => {
 		const onRequest = vi.fn();
 		const onResponse = vi.fn();
 		const f = createFetch({
 			baseURL: "http://localhost:4001",
-			customFetchImpl: async (req, init) => {
-				return new Response(JSON.stringify({ message: "ok" }));
-			},
+			customFetchImpl: async () => new Response(JSON.stringify({ message: "ok" })),
 			onRequest,
 			onResponse,
 		});
@@ -361,22 +292,16 @@ describe("hooks", () => {
 		expect(onResponse).toHaveBeenCalled();
 	});
 
-	it("should call onError", async () => {
+	it("calls onError but not onSuccess on a failing response", async () => {
 		const onError = vi.fn();
 		const onResponse = vi.fn();
 		const onSuccess = vi.fn();
 		const f = createFetch({
 			baseURL: "http://localhost:4001",
-			customFetchImpl: async (req, init) => {
-				return new Response(
-					JSON.stringify({
-						message: "Server Error",
-					}),
-					{
-						status: 500,
-					},
-				);
-			},
+			customFetchImpl: async () =>
+				new Response(JSON.stringify({ message: "Server Error" }), {
+					status: 500,
+				}),
 			onError,
 			onResponse,
 			onSuccess,
@@ -386,23 +311,17 @@ describe("hooks", () => {
 			request: expect.any(Object),
 			response: expect.any(Response),
 			responseText: '{"message":"Server Error"}',
-			error: {
-				message: "Server Error",
-				status: 500,
-				statusText: "",
-			},
+			error: { message: "Server Error", status: 500, statusText: "" },
 		});
 		expect(onResponse).toHaveBeenCalled();
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
 
-	it("should work with relative url", async () => {
+	it("works with a relative url and a custom fetch impl", async () => {
 		const onRequest = vi.fn();
 		const onResponse = vi.fn();
 		const f = createFetch({
-			customFetchImpl: async (req, init) => {
-				return new Response(JSON.stringify({ message: "ok" }));
-			},
+			customFetchImpl: async () => new Response(JSON.stringify({ message: "ok" })),
 			onRequest,
 			onResponse,
 		});
@@ -416,7 +335,7 @@ describe("hooks", () => {
 describe("fetch-error-throw", () => {
 	const f = createFetch({
 		baseURL: "http://localhost:4001",
-		customFetchImpl: async (req, init) => {
+		customFetchImpl: async (req) => {
 			const url = new URL(req.toString());
 			if (url.pathname.startsWith("/ok")) {
 				return new Response(JSON.stringify({ message: "ok" }));
@@ -427,199 +346,42 @@ describe("fetch-error-throw", () => {
 				});
 			}
 			if (url.pathname.startsWith("/error-string-response")) {
-				return new Response("An error occurred", {
-					status: 400,
-				});
+				return new Response("An error occurred", { status: 400 });
 			}
-			return new Response(null, {
-				status: 500,
-			});
+			return new Response(null, { status: 500 });
 		},
 		throw: true,
 	});
-	it("should throw if the response is not ok", async () => {
+
+	it("throws a BetterFetchError when the response is not ok", async () => {
 		await expect(f("/not-ok")).rejects.toThrowError(BetterFetchError);
 	});
 
-	it("error should have error object if json returned", async () => {
-		try {
-			await f("/error-json-response");
-		} catch (error) {
-			if (error instanceof BetterFetchError) {
-				expect(error.error).toEqual({ message: "error" });
-			}
-		}
+	it("exposes the parsed JSON body on the thrown error", async () => {
+		await expect(f("/error-json-response")).rejects.toMatchObject({
+			error: { message: "error" },
+		});
 	});
 
-	it("error should have error string if text returned", async () => {
-		try {
-			await f("/error-string-response");
-		} catch (error) {
-			if (error instanceof BetterFetchError) {
-				expect(error.error).toEqual("An error occurred");
-			}
-		}
+	it("exposes the text body on the thrown error", async () => {
+		await expect(f("/error-string-response")).rejects.toMatchObject({
+			error: "An error occurred",
+		});
 	});
 
-	it("should return data without error object", async () => {
+	it("returns data directly when throw is enabled and the response is ok", async () => {
 		const res = await f<{ message: "ok" }>("/ok");
 		expect(res).toEqual({ message: "ok" });
 	});
 });
 
-describe("url", () => {
-	it("should work with params", async () => {
-		const url = getURL("param/:id", {
-			params: {
-				id: "1",
-			},
-			baseURL: "http://localhost:4001",
-		});
-		expect(url.toString()).toBe("http://localhost:4001/param/1");
-	});
-
-	it("should use the url base if the url starts with http", async () => {
-		const url = getURL("http://localhost:4001/param/:id", {
-			params: {
-				id: "1",
-			},
-		});
-		expect(url.toString()).toBe("http://localhost:4001/param/1");
-	});
-
-	it("should work with query params", async () => {
-		const url = getURL("/query", {
-			query: {
-				id: "1",
-			},
-			baseURL: "http://localhost:4001",
-		});
-		expect(url.toString()).toBe("http://localhost:4001/query?id=1");
-	});
-
-	it("should not include nullable values in query params", async () => {
-		const url = getURL("/query", {
-			query: {
-				id: "1",
-				nullValue: null,
-				undefinedValue: undefined,
-			},
-			baseURL: "http://localhost:4001",
-		});
-		expect(url.toString()).toBe("http://localhost:4001/query?id=1");
-	});
-
-	it("should work with dynamic params", async () => {
-		const url = getURL("/param/:id", {
-			params: {
-				id: "1",
-			},
-			baseURL: "http://localhost:4001",
-		});
-		expect(url.toString()).toBe("http://localhost:4001/param/1");
-	});
-
-	it("should merge query from the url", async () => {
-		const url = getURL("/query?name=test&age=20", {
-			query: {
-				id: "1",
-			},
-			baseURL: "http://localhost:4001",
-		});
-		expect(url.toString()).toBe(
-			"http://localhost:4001/query?name=test&age=20&id=1",
-		);
-	});
-
-	it("should give priority based on the order", async () => {
-		const url = getURL("/query", {
-			query: {
-				id: "1",
-				name: "test2",
-			},
-			baseURL: "http://localhost:4001",
-		});
-		expect(url.toString()).toBe("http://localhost:4001/query?id=1&name=test2");
-	});
-
-	it("should encode the query params", async () => {
-		const url = getURL("/query", {
-			query: {
-				id: "#20",
-				name: "test 2",
-			},
-			baseURL: "http://localhost:4001",
-		});
-		expect(url.toString()).toBe(
-			"http://localhost:4001/query?id=%2320&name=test%202",
-		);
-	});
-
-	it("should encode dynamic params", async () => {
-		const url = getURL("/param/:id/:space", {
-			params: {
-				id: "#test",
-				space: "item 1",
-			},
-			baseURL: "http://localhost:4001",
-		});
-		expect(url.toString()).toBe("http://localhost:4001/param/%23test/item%201");
-	});
-
-	it("should expand array values into multiple query parameters", () => {
-		const url = getURL("/test", {
-			query: {
-				filterValue: ["admin", "user"],
-			},
-			baseURL: "http://localhost:4000",
-		});
-
-		expect(url.toString()).toBe(
-			"http://localhost:4000/test?filterValue=admin&filterValue=user",
-		);
-	});
-
-	it("should preserve objects as JSON strings", () => {
-		const url = getURL("/test", {
-			query: {
-				options: { page: 1, limit: 10 },
-			},
-			baseURL: "http://localhost:4000",
-		});
-
-		expect(url.toString()).toBe(
-			"http://localhost:4000/test?options=%7B%22page%22%3A1%2C%22limit%22%3A10%7D",
-		);
-	});
-
-	it("should leave strings untouched", () => {
-		const url = getURL("/test", {
-			query: { foo: "bar" },
-			baseURL: "http://localhost:4000",
-		});
-
-		expect(url.toString()).toBe("http://localhost:4000/test?foo=bar");
-	});
-});
-
-describe("form data", async () => {
-	it("should parse json to form data", async () => {
+describe("form data", () => {
+	it("encodes an object body as form-urlencoded", async () => {
 		const { data } = await betterFetch("/echo", {
-			body: {
-				name: "John Doe",
-				age: 30,
-			},
-			headers: {
-				"Content-Type": "application/x-www-form-urlencoded",
-			},
-			onRequest(context) {
-				console.log(context.body);
-			},
-			customFetchImpl: async (req, init) => {
-				return new Response(JSON.stringify(init?.body), {
-					status: 200,
-				});
-			},
+			body: { name: "John Doe", age: 30 },
+			headers: { "Content-Type": "application/x-www-form-urlencoded" },
+			customFetchImpl: async (_req, init) =>
+				new Response(JSON.stringify(init?.body), { status: 200 }),
 		});
 		expect(data).toBe("name=John+Doe&age=30");
 	});
