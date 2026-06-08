@@ -32,7 +32,7 @@ export function getURL(url: string, option?: BetterFetchOption) {
 		let serializedValue;
 		if (typeof value === "string") {
 			serializedValue = value;
-		} else if (Array.isArray(value)) {
+		} else if (option?.repeatArrayParams && Array.isArray(value)) {
 			for (const val of value) {
 				queryParams.append(key, val);
 			}
