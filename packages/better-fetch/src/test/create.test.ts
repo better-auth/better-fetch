@@ -705,4 +705,25 @@ describe("create-fetch-headers", () => {
 		expect(get()?.get("x-base")).toBe("base");
 		expect(get()?.get("cookie")).toBe("session=abc");
 	});
+
+	it("exposes options.headers to plugins as a spreadable plain object", async () => {
+		// The electron/expo client plugins spread `options.headers`; a `Headers`
+		// instance would spread to `{}` and drop the user's headers.
+		let spread: Record<string, string> | undefined;
+		const inspectPlugin: BetterFetchPlugin = {
+			id: "inspect",
+			name: "inspect",
+			async init(url, options) {
+				spread = { ...(options?.headers as Record<string, string>) };
+				return { url, options };
+			},
+		};
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => new Response(null, { status: 200 }),
+			plugins: [inspectPlugin],
+		});
+		await $fetch("/x", { headers: new Headers({ "x-user": "u" }) });
+		expect(spread).toEqual({ "x-user": "u" });
+	});
 });

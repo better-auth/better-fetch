@@ -103,20 +103,23 @@ export function isRouteMethod(method?: string) {
 
 export function mergeHeaders(
 	...sources: (HeadersInit | Record<string, string | undefined> | undefined)[]
-): Headers {
-	const merged = new Headers();
+): Record<string, string> {
+	const merged: Record<string, string> = {};
 	for (const source of sources) {
 		if (!source) {
 			continue;
 		}
-		// Object.entries/spread on a Headers instance yields nothing, dropping it.
+		// Headers has no enumerable keys (Object.entries/spread drops it); the
+		// result stays a plain object so plugins can spread `options.headers`.
 		if (source instanceof Headers) {
-			source.forEach((value, key) => merged.set(key, value));
+			source.forEach((value, key) => {
+				merged[key] = value;
+			});
 		} else {
 			const entries = Array.isArray(source) ? source : Object.entries(source);
 			for (const [key, value] of entries) {
 				if (value !== null && value !== undefined) {
-					merged.set(key, value);
+					merged[key] = value;
 				}
 			}
 		}
@@ -125,7 +128,7 @@ export function mergeHeaders(
 }
 
 export async function getHeaders(opts?: BetterFetchOption) {
-	const headers = mergeHeaders(opts?.headers, await getAuthHeader(opts));
+	const headers = new Headers(mergeHeaders(opts?.headers, await getAuthHeader(opts)));
 
 	if (!headers.has("content-type")) {
 		const contentType = detectContentType(opts?.body);
