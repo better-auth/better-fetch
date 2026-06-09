@@ -1,33 +1,8 @@
 import { betterFetch } from "../fetch";
 import { BetterFetchPlugin } from "../plugins";
 import type { BetterFetchOption } from "../types";
-import { parseStandardSchema } from "../utils";
+import { mergeHeaders, parseStandardSchema } from "../utils";
 import type { BetterFetch, CreateFetchOption } from "./types";
-
-const mergeHeaders = (
-	base?: Record<string, string | undefined>,
-	override?: Record<string, string | undefined>,
-): Record<string, string | undefined> => {
-	const result: Record<string, string | undefined> = {};
-	
-	if (base) {
-		for (const [key, value] of Object.entries(base)) {
-			if (value !== null && value !== undefined) {
-				result[key] = value;
-			}
-		}
-	}
-	
-	if (override) {
-		for (const [key, value] of Object.entries(override)) {
-			if (value !== null && value !== undefined) {
-				result[key] = value;
-			}
-		}
-	}
-	
-	return result;
-};
 
 export const applySchemaPlugin = (config: CreateFetchOption) =>
 	({

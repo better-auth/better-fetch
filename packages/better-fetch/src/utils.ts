@@ -101,29 +101,31 @@ export function isRouteMethod(method?: string) {
 	return routeMethod.includes(method.toUpperCase());
 }
 
-function mergeHeaders(
-	target: Headers,
-	source?: BetterFetchOption["headers"] | Record<string, string>,
-) {
-	if (!source) {
-		return;
-	}
-	if (source instanceof Headers) {
-		source.forEach((value, key) => target.set(key, value));
-		return;
-	}
-	const entries = Array.isArray(source) ? source : Object.entries(source);
-	for (const [key, value] of entries) {
-		if (value !== null && value !== undefined) {
-			target.set(key, value);
+export function mergeHeaders(
+	...sources: (HeadersInit | Record<string, string | undefined> | undefined)[]
+): Headers {
+	const merged = new Headers();
+	for (const source of sources) {
+		if (!source) {
+			continue;
+		}
+		// Object.entries/spread on a Headers instance yields nothing, dropping it.
+		if (source instanceof Headers) {
+			source.forEach((value, key) => merged.set(key, value));
+		} else {
+			const entries = Array.isArray(source) ? source : Object.entries(source);
+			for (const [key, value] of entries) {
+				if (value !== null && value !== undefined) {
+					merged.set(key, value);
+				}
+			}
 		}
 	}
+	return merged;
 }
 
 export async function getHeaders(opts?: BetterFetchOption) {
-	const headers = new Headers();
-	mergeHeaders(headers, opts?.headers);
-	mergeHeaders(headers, await getAuthHeader(opts));
+	const headers = mergeHeaders(opts?.headers, await getAuthHeader(opts));
 
 	if (!headers.has("content-type")) {
 		const contentType = detectContentType(opts?.body);

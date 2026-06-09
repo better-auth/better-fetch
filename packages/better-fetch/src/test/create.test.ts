@@ -660,3 +660,49 @@ describe("plugin", () => {
 		expectTypeOf(f).parameter(0).toMatchTypeOf<"/path">();
 	});
 });
+
+describe("create-fetch-headers", () => {
+	const captureHeaders = () => {
+		let received: Headers | undefined;
+		const customFetchImpl = async (_url: any, init?: RequestInit) => {
+			received = new Headers(init?.headers);
+			return new Response(null, { status: 200 });
+		};
+		return { customFetchImpl, get: () => received };
+	};
+
+	it("preserves headers passed as a Headers instance", async () => {
+		const { customFetchImpl, get } = captureHeaders();
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			customFetchImpl,
+		});
+		await $fetch("/x", {
+			headers: new Headers({ cookie: "session=abc", "x-test": "1" }),
+		});
+		expect(get()?.get("cookie")).toBe("session=abc");
+		expect(get()?.get("x-test")).toBe("1");
+	});
+
+	it("preserves headers passed as a plain object", async () => {
+		const { customFetchImpl, get } = captureHeaders();
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			customFetchImpl,
+		});
+		await $fetch("/x", { headers: { cookie: "session=abc" } });
+		expect(get()?.get("cookie")).toBe("session=abc");
+	});
+
+	it("merges config headers with per-call Headers instance", async () => {
+		const { customFetchImpl, get } = captureHeaders();
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			headers: { "x-base": "base" },
+			customFetchImpl,
+		});
+		await $fetch("/x", { headers: new Headers({ cookie: "session=abc" }) });
+		expect(get()?.get("x-base")).toBe("base");
+		expect(get()?.get("cookie")).toBe("session=abc");
+	});
+});
