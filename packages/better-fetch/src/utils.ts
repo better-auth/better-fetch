@@ -101,32 +101,34 @@ export function isRouteMethod(method?: string) {
 	return routeMethod.includes(method.toUpperCase());
 }
 
-export async function getHeaders(opts?: BetterFetchOption) {
-	const headers = new Headers();
-	
-	if (opts?.headers) {
-		if (opts.headers instanceof Headers) {
-			opts.headers.forEach((value, key) => {
-				headers.set(key, value);
-			});
-		} else {
-			for (const [key, value] of Object.entries(opts.headers)) {
-				if (value !== null && value !== undefined) {
-					headers.set(key, value);
-				}
-			}
+function mergeHeaders(
+	target: Headers,
+	source?: BetterFetchOption["headers"] | Record<string, string>,
+) {
+	if (!source) {
+		return;
+	}
+	if (source instanceof Headers) {
+		source.forEach((value, key) => target.set(key, value));
+		return;
+	}
+	const entries = Array.isArray(source) ? source : Object.entries(source);
+	for (const [key, value] of entries) {
+		if (value !== null && value !== undefined) {
+			target.set(key, value);
 		}
 	}
-	
-	const authHeader = await getAuthHeader(opts);
-	for (const [key, value] of Object.entries(authHeader || {})) {
-		headers.set(key, value);
-	}
-	
+}
+
+export async function getHeaders(opts?: BetterFetchOption) {
+	const headers = new Headers();
+	mergeHeaders(headers, opts?.headers);
+	mergeHeaders(headers, await getAuthHeader(opts));
+
 	if (!headers.has("content-type")) {
-		const t = detectContentType(opts?.body);
-		if (t) {
-			headers.set("content-type", t);
+		const contentType = detectContentType(opts?.body);
+		if (contentType) {
+			headers.set("content-type", contentType);
 		}
 	}
 
@@ -208,42 +210,29 @@ export function detectContentType(body: any) {
 	return null;
 }
 
-export function getBody(options?: BetterFetchOption) {
-	if (!options?.body) {
+function getMediaType(headers: Headers): string | null {
+	const contentType = headers.get("content-type");
+	return contentType ? contentType.split(";")[0].trim().toLowerCase() : null;
+}
+
+export function getBody(
+	options: BetterFetchOption,
+	headers: Headers,
+): BodyInit | null {
+	const { body } = options;
+	if (!body) {
 		return null;
 	}
-	
-	let hasContentType = false;
-	if (options?.headers) {
-		if (options.headers instanceof Headers) {
-			hasContentType = options.headers.has("content-type");
-		} else if (typeof options.headers === "object") {
-			hasContentType = "content-type" in options.headers && 
-				options.headers["content-type"] !== null && 
-				options.headers["content-type"] !== undefined;
-		}
+	if (!isJSONSerializable(body)) {
+		return body as BodyInit;
 	}
-	
-	if (isJSONSerializable(options.body) && !hasContentType) {
-		for (const [key, value] of Object.entries(options?.body)) {
-			if (value instanceof Date) {
-				options.body[key] = value.toISOString();
-			}
-		}
-		return JSON.stringify(options.body);
+	if (typeof body === "string") {
+		return body;
 	}
-
-	if (
-		headers.has("content-type") &&
-		headers.get("content-type") === "application/x-www-form-urlencoded"
-	) {
-		if (isJSONSerializable(options.body)) {
-			return new URLSearchParams(options.body).toString();
-		}
-		return options.body;
+	if (getMediaType(headers) === "application/x-www-form-urlencoded") {
+		return new URLSearchParams(body as Record<string, string>).toString();
 	}
-
-	return options.body;
+	return JSON.stringify(body);
 }
 
 export function getMethod(url: string, options?: BetterFetchOption) {
