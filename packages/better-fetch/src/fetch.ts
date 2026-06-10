@@ -1,5 +1,5 @@
 import { BetterFetchError } from "./error";
-import { initializePlugins } from "./plugins";
+import { type RequestContext, initializePlugins } from "./plugins";
 import { createRetryStrategy } from "./retry";
 import type { StandardSchemaV1 } from "./standard-schema";
 import type { BetterFetchOption, BetterFetchResponse } from "./types";
@@ -44,13 +44,19 @@ export const betterFetch = async <
 	const headers = await getHeaders(opts);
 	const body = getBody(opts, headers);
 	const method = getMethod(__url, opts);
-	let context = {
+	// fresh per request so concurrent requests never share state
+	const store: Record<string, unknown> = Object.assign(
+		Object.create(null),
+		opts.context,
+	);
+	let context: RequestContext = {
 		...opts,
 		url: _url,
 		headers,
 		body,
 		method,
 		signal,
+		context: store,
 	};
 	/**
 	 * Run all on request hooks
@@ -60,6 +66,7 @@ export const betterFetch = async <
 			const res = await onRequest(context);
 			if (typeof res === "object" && res !== null) {
 				context = res;
+				context.context = store; // re-anchor after replacement
 			}
 		}
 	}

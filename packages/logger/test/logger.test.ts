@@ -1,4 +1,8 @@
-import { type FetchEsque, createFetch } from "@better-fetch/fetch";
+import {
+	type BetterFetchPlugin,
+	type FetchEsque,
+	createFetch,
+} from "@better-fetch/fetch";
 import { describe, expect, it, vi } from "vitest";
 import { type LoggerOptions, logger } from "../src/index";
 
@@ -182,5 +186,89 @@ describe("logger - disabled", () => {
 		expect(cons.success).not.toHaveBeenCalled();
 		expect(cons.fail).not.toHaveBeenCalled();
 		expect(cons.error).not.toHaveBeenCalled();
+	});
+});
+
+describe("logger - per-request store", () => {
+	it("keeps duration when another plugin replaces the request context", async () => {
+		const cons = mockConsole();
+		// onRequest returns a fresh context that drops the store
+		const replaceContext = {
+			id: "replace",
+			name: "replace",
+			hooks: {
+				onRequest(context) {
+					return { ...context, context: undefined };
+				},
+			},
+		} satisfies BetterFetchPlugin;
+		const $fetch = createFetch({
+			baseURL: "http://localhost:3000",
+			plugins: [logger({ console: cons }), replaceContext],
+			customFetchImpl: mockFetch(200, { ok: true }),
+		});
+
+		await $fetch("/users");
+
+		expect(cons.success).toHaveBeenCalledTimes(1);
+		expect(messageOf(cons.success)).toMatch(/\(\d+ms\)/);
+	});
+
+	it("isolates the store per request even with a shared default context", async () => {
+		const seen: string[] = [];
+		const probe = {
+			id: "probe",
+			name: "probe",
+			hooks: {
+				onRequest(context) {
+					if (context.context) {
+						context.context.path = context.url.toString();
+					}
+				},
+				onSuccess(context) {
+					seen.push(context.request.context?.path as string);
+				},
+			},
+		} satisfies BetterFetchPlugin;
+		const $fetch = createFetch({
+			baseURL: "http://localhost:3000",
+			context: {}, // shared default
+			plugins: [probe],
+			customFetchImpl: async (input) => {
+				if (input.toString().includes("/a")) {
+					await new Promise((r) => setTimeout(r, 30));
+				}
+				return new Response(null, { status: 200 });
+			},
+		});
+
+		await Promise.all([$fetch("/a"), $fetch("/b")]);
+
+		expect([...seen].sort()).toEqual([
+			"http://localhost:3000/a",
+			"http://localhost:3000/b",
+		]);
+	});
+
+	it("exposes a null-prototype store with no inherited keys", async () => {
+		let inherited: unknown = "sentinel";
+		const probe = {
+			id: "proto",
+			name: "proto",
+			hooks: {
+				onRequest(context) {
+					inherited = context.context?.toString;
+				},
+			},
+		} satisfies BetterFetchPlugin;
+		const $fetch = createFetch({
+			baseURL: "http://localhost:3000",
+			plugins: [probe],
+			customFetchImpl: mockFetch(200, { ok: true }),
+		});
+
+		await $fetch("/x");
+
+		expect(inherited).toBeUndefined();
 	});
 });

@@ -64,14 +64,37 @@ const defaultConsole: ConsoleEsque = {
 	},
 };
 
+const START = "@better-fetch/logger.start";
+
 function formatPrefix(method: string, url: string | URL): string {
 	return `[${method.toUpperCase()}] ${url.toString()}`;
 }
 
-function formatDuration(startTime: number | undefined): string {
-	if (startTime === undefined) return "";
-	const ms = Date.now() - startTime;
-	return ` (${ms}ms)`;
+function formatLine(
+	request: {
+		method: string;
+		url: string | URL;
+		context?: Record<string, unknown>;
+	},
+	response: Response,
+): string {
+	const status = response.status;
+	const statusText = response.statusText || getStatusText(status);
+	const start = request.context?.[START];
+	const duration =
+		typeof start === "number" ? ` (${Date.now() - start}ms)` : "";
+	return `${formatPrefix(
+		request.method,
+		request.url,
+	)} — ${status} ${statusText}${duration}`;
+}
+
+async function parseBody(response: Response): Promise<unknown> {
+	try {
+		return await response.clone().json();
+	} catch {
+		return undefined;
+	}
 }
 
 export const logger = (options?: LoggerOptions) => {
@@ -83,7 +106,6 @@ export const logger = (options?: LoggerOptions) => {
 	};
 	const { enabled } = opts;
 	const isLegacy = opts.logFormat === "legacy";
-	const startTimes = new WeakMap<object, number>();
 
 	return {
 		id: "logger",
@@ -92,17 +114,14 @@ export const logger = (options?: LoggerOptions) => {
 		hooks: {
 			onRequest(context) {
 				if (!enabled) return;
-				startTimes.set(context, Date.now());
+				if (context.context) {
+					context.context[START] = Date.now();
+				}
 				if (isLegacy) {
-					opts.console.log(
-						"Request being sent to:",
-						context.url.toString(),
-					);
+					opts.console.log("Request being sent to:", context.url.toString());
 					return;
 				}
-				opts.console.log(
-					formatPrefix(context.method, context.url),
-				);
+				opts.console.log(formatPrefix(context.method, context.url));
 			},
 			async onSuccess(context) {
 				if (!enabled) return;
@@ -111,15 +130,7 @@ export const logger = (options?: LoggerOptions) => {
 					log("Request succeeded", context.data);
 					return;
 				}
-				const duration = formatDuration(
-					startTimes.get(context.request),
-				);
-				const status = context.response.status;
-				const statusText =
-					context.response.statusText || getStatusText(status);
-				log(
-					`${formatPrefix(context.request.method, context.request.url)} — ${status} ${statusText}${duration}`,
-				);
+				log(formatLine(context.request, context.response));
 				if (opts.verbose) {
 					opts.console.log(context.data);
 				}
@@ -127,65 +138,34 @@ export const logger = (options?: LoggerOptions) => {
 			onRetry(response) {
 				if (!enabled) return;
 				const log = opts.console.warn || opts.console.log;
+				const attempt = (response.request.retryAttempt || 0) + 1;
 				if (isLegacy) {
-					log(
-						"Retrying request...",
-						"Attempt:",
-						(response.request.retryAttempt || 0) + 1,
-					);
+					log("Retrying request...", "Attempt:", attempt);
 					return;
 				}
-				const attempt = (response.request.retryAttempt || 0) + 1;
 				log(
-					`${formatPrefix(response.request.method, response.request.url)} — Retry attempt #${attempt}`,
+					`${formatPrefix(
+						response.request.method,
+						response.request.url,
+					)} — Retry attempt #${attempt}`,
 				);
 			},
 			async onError(context) {
 				if (!enabled) return;
 				const log = opts.console.fail || opts.console.error;
+				const body = opts.verbose
+					? await parseBody(context.response)
+					: undefined;
 				if (isLegacy) {
-					let obj: any;
-					try {
-						if (opts.verbose) {
-							const res = context.response.clone();
-							const json = await res.json();
-							if (json) {
-								obj = json;
-							}
-						}
-					} catch (e) {}
-					log(
-						"Request failed with status: ",
-						context.response.status,
-						`(${
-							context.response.statusText ||
-							getStatusText(context.response.status)
-						})`,
-					);
-					opts.verbose && obj && opts.console.error(obj);
-					return;
+					const status = context.response.status;
+					const statusText =
+						context.response.statusText || getStatusText(status);
+					log("Request failed with status: ", status, `(${statusText})`);
+				} else {
+					log(formatLine(context.request, context.response));
 				}
-				const duration = formatDuration(
-					startTimes.get(context.request),
-				);
-				const status = context.response.status;
-				const statusText =
-					context.response.statusText || getStatusText(status);
-				log(
-					`${formatPrefix(context.request.method, context.request.url)} — ${status} ${statusText}${duration}`,
-				);
-				if (opts.verbose) {
-					let obj: any;
-					try {
-						const res = context.response.clone();
-						const json = await res.json();
-						if (json) {
-							obj = json;
-						}
-					} catch (e) {}
-					if (obj) {
-						opts.console.error(obj);
-					}
+				if (body) {
+					opts.console.error(body);
 				}
 			},
 		},
