@@ -1,6 +1,7 @@
 {
 	"name": "@better-fetch/fetch",
 	"version": "1.2.2",
+	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/better-auth/better-fetch.git",
