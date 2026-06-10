@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createFetch } from "..";
-import { logger } from "@better-fetch/logger";
+import { createFetch } from "@better-fetch/fetch";
+import { logger } from "../src/index";
 
 function mockConsole() {
 	return {
