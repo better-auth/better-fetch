@@ -5,7 +5,8 @@
 	"scripts": {
 		"build": "pnpm --filter \"./packages/*\" build",
 		"dev": "pnpm -F fetch dev",
-		"test": "pnpm --filter \"./packages/*\" test",
+		"test": "vitest run",
+		"test:watch": "vitest",
 		"bump": "bumpp  \"./packages/*/package.json\"",
 		"release": "pnpm --filter \"./packages/*\" build && bumpp && pnpm -r publish --access public",
 		"typecheck": "pnpm -r typecheck",

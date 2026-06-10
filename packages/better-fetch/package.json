@@ -15,9 +15,7 @@
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
-		"test": "vitest",
 		"bump": "bumpp",
-		"test:watch": "vitest watch",
 		"lint": "biome check .",
 		"release": "bun run build && npm publish --access public",
 		"lint:fix": "biome check . --apply",
