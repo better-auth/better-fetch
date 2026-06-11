@@ -253,6 +253,37 @@ describe("create-fetch-runtime-test", () => {
 			method: "PUT",
 		});
 	});
+
+	it("keeps the request-context identity stable across replacing hooks", async () => {
+		const seen: object[] = [];
+		const capture = (id: string): BetterFetchPlugin => ({
+			id,
+			name: id,
+			hooks: {
+				// returning a replacement must not break per-request identity
+				onRequest(context) {
+					seen.push(context);
+					return { ...context };
+				},
+			},
+		});
+		const $fetch = createFetch({
+			baseURL: "http://localhost:4001",
+			customFetchImpl: async () => new Response(null, { status: 200 }),
+			plugins: [capture("a"), capture("b")],
+		});
+
+		let successRequest: object | undefined;
+		await $fetch("/", {
+			onSuccess(context) {
+				successRequest = context.request;
+			},
+		});
+
+		expect(seen).toHaveLength(2);
+		expect(seen[1]).toBe(seen[0]);
+		expect(successRequest).toBe(seen[0]);
+	});
 });
 
 describe("create-fetch-type-test", () => {
@@ -270,10 +301,8 @@ describe("create-fetch-type-test", () => {
 		const res = await $fetch("/", {
 			throw: true,
 		});
-		expectTypeOf(res).toMatchTypeOf<
-			{ message: string }
-		>();
-	})
+		expectTypeOf(res).toMatchTypeOf<{ message: string }>();
+	});
 
 	it("should return unknown if no output is defined", () => {
 		const res = $fetch("/");

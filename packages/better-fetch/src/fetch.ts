@@ -44,7 +44,9 @@ export const betterFetch = async <
 	const headers = await getHeaders(opts);
 	const body = getBody(opts, headers);
 	const method = getMethod(__url, opts);
-	let context = {
+	// one stable object for the whole request so per-request state keyed on
+	// its identity survives hooks that return a replacement context
+	const context = {
 		...opts,
 		url: _url,
 		headers,
@@ -59,7 +61,7 @@ export const betterFetch = async <
 		if (onRequest) {
 			const res = await onRequest(context);
 			if (typeof res === "object" && res !== null) {
-				context = res;
+				Object.assign(context, res);
 			}
 		}
 	}
