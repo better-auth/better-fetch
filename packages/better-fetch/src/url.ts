@@ -57,7 +57,7 @@ export function getURL(url: string, option?: BetterFetchOption) {
 	}
 
 	path = path.split("/").map(encodeURIComponent).join("/");
-	if (path.startsWith("/")) path = path.slice(1);
+	path = path.replace(/^\/+/, "");
 	let queryParamString = queryParams.toString();
 	queryParamString =
 		queryParamString.length > 0

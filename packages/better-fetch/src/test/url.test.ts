@@ -25,6 +25,13 @@ describe("url", () => {
 		expect(url.toString()).toBe("http://localhost:4001/query?id=1");
 	});
 
+	it("normalizes repeated leading slashes before joining with base URL", () => {
+		const url = getURL("///accounts/list", {
+			baseURL: "https://api.example.com",
+		});
+		expect(url.toString()).toBe("https://api.example.com/accounts/list");
+	});
+
 	it("omits null and undefined query values", () => {
 		const url = getURL("/query", {
 			query: { id: "1", nullValue: null, undefinedValue: undefined },
