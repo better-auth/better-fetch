@@ -3,7 +3,7 @@ import { getAuthHeader } from "./auth";
 import { methods } from "./create-fetch";
 import type { BetterFetchOption, FetchEsque } from "./types";
 
-const JSON_RE = /^application\/(?:[\w!#$%&*.^`~-]*\+)?json(;.+)?$/i;
+const JSON_RE = /^application\/(?:[\w!#$%&*.^`~+-]*\+)?json(;.+)?$/i;
 
 export type ResponseType = "json" | "text" | "blob";
 export function detectResponseType(request: Response): ResponseType {
