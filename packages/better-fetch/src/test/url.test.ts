@@ -76,6 +76,35 @@ describe("url", () => {
 		expect(url.toString()).toBe("http://localhost:4001/param/%23test/item%201");
 	});
 
+	it("encodes dynamic path params as single path segments", () => {
+		const url = getURL("/v1/users/:id", {
+			params: { id: "teams/engineering" },
+			baseURL: "https://api.example.com",
+		});
+		expect(url.toString()).toBe(
+			"https://api.example.com/v1/users/teams%2Fengineering",
+		);
+	});
+
+	it("encodes array path params as single path segments", () => {
+		const url = getURL("/v1/:resource/:id", {
+			params: ["teams/engineering", "current"],
+			baseURL: "https://api.example.com",
+		});
+		expect(url.toString()).toBe(
+			"https://api.example.com/v1/teams%2Fengineering/current",
+		);
+	});
+
+	it("rejects reserved dynamic path params", () => {
+		expect(() =>
+			getURL("/v1/users/:id", {
+				params: { id: ".." },
+				baseURL: "https://api.example.com",
+			}),
+		).toThrow("reserved path segments");
+	});
+
 	it("expands array query values into repeated params", () => {
 		const url = getURL("/test", {
 			query: { filterValue: ["admin", "user"] },
