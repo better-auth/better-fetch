@@ -2,6 +2,10 @@
 	"name": "@better-fetch/fetch",
 	"version": "1.3.1",
 	"license": "MIT",
+	"homepage": "https://github.com/better-auth/better-fetch/tree/main/packages/better-fetch#readme",
+	"bugs": {
+		"url": "https://github.com/better-auth/better-fetch/issues"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/better-auth/better-fetch.git",
