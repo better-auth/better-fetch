@@ -1,30 +1,38 @@
 {
-	"name": "@better-fetch/root",
-	"private": true,
-	"version": "",
-	"scripts": {
-		"build": "pnpm --filter \"./packages/*\" build",
-		"dev": "pnpm -F fetch dev",
-		"test": "vitest run",
-		"test:watch": "vitest",
-		"bump": "bumpp  \"./packages/*/package.json\"",
-		"release": "pnpm --filter \"./packages/*\" build && bumpp && pnpm -r publish --access public",
-		"typecheck": "pnpm -r typecheck",
-		"lint": "biome check .",
-		"format": "biome check . --apply"
-	},
-	"dependencies": {
-		"@biomejs/biome": "1.7.3",
-		"simple-git-hooks": "^2.11.1",
-		"tinyglobby": "^0.2.9",
-		"vitest": "^1.5.0"
-	},
-	"simple-git-hooks": {
-		"pre-push": "pnpm typecheck"
-	},
-	"devDependencies": {
-		"bumpp": "^9.4.1",
-		"tsup": "^8.0.2"
-	},
-	"packageManager": "pnpm@11.1.1"
+  "name": "@better-fetch/root",
+  "private": true,
+  "version": "",
+  "scripts": {
+    "build": "pnpm --filter \"./packages/*\" build",
+    "dev": "pnpm -F fetch dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bump": "bumpp  \"./packages/*/package.json\"",
+    "release": "pnpm --filter \"./packages/*\" build && bumpp && pnpm -r publish --access public",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "biome check .",
+    "format": "biome check . --apply"
+  },
+  "dependencies": {
+    "@biomejs/biome": "1.7.3",
+    "simple-git-hooks": "^2.11.1",
+    "tinyglobby": "^0.2.9",
+    "vitest": "^1.5.0"
+  },
+  "simple-git-hooks": {
+    "pre-push": "pnpm typecheck"
+  },
+  "devDependencies": {
+    "bumpp": "^9.4.1",
+    "tsup": "^8.0.2"
+  },
+  "packageManager": "pnpm@11.1.1",
+  "homepage": "https://better-fetch.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/renaudgenard/better-fetch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/renaudgenard/better-fetch/issues"
+  }
 }
