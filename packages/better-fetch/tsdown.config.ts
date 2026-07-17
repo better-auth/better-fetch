@@ -7,11 +7,6 @@ export default defineConfig({
 	sourcemap: true,
 	format: ["esm", "cjs"],
 	dts: true,
-	outExtensions({ format }) {
-		return format === "es"
-			? { js: ".js", dts: ".d.ts" }
-			: { js: ".cjs", dts: ".d.cts" };
-	},
 	deps: {
 		neverBundle: ["zod"],
 	},
