@@ -257,7 +257,10 @@ export function getMethod(url: string, options?: BetterFetchOption) {
 export function getTimeout(
 	options?: BetterFetchOption,
 	controller?: AbortController,
-) {
+): {
+	abortTimeout: ReturnType<typeof setTimeout> | undefined;
+	clearTimeout: () => void;
+} {
 	let abortTimeout: ReturnType<typeof setTimeout> | undefined;
 	if (!options?.signal && options?.timeout) {
 		abortTimeout = setTimeout(() => controller?.abort(), options?.timeout);

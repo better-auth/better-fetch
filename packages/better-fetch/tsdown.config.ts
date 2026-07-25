@@ -1,11 +1,13 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
 	entry: ["./src/index.ts"],
-	splitting: false,
+	target: "es2017",
+	platform: "neutral",
 	sourcemap: true,
 	format: ["esm", "cjs"],
 	dts: true,
-	clean: true,
-	external: ["zod"],
+	deps: {
+		neverBundle: ["zod"],
+	},
 });
