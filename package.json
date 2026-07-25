@@ -3,6 +3,7 @@
 	"private": true,
 	"version": "",
 	"scripts": {
+		"prepare": "if git rev-parse --git-dir >/dev/null 2>&1; then lefthook install --reset-hooks-path; else echo \"skipping lefthook (not a git repo)\"; fi",
 		"build": "pnpm --filter \"./packages/*\" build",
 		"dev": "pnpm -F fetch dev",
 		"test": "vitest run",
@@ -15,15 +16,12 @@
 	},
 	"dependencies": {
 		"@biomejs/biome": "1.7.3",
-		"simple-git-hooks": "^2.11.1",
 		"tinyglobby": "^0.2.9",
 		"vitest": "^1.5.0"
 	},
-	"simple-git-hooks": {
-		"pre-push": "pnpm typecheck"
-	},
 	"devDependencies": {
 		"bumpp": "^9.4.1",
+		"lefthook": "^2.1.4",
 		"tsup": "^8.0.2"
 	},
 	"packageManager": "pnpm@11.1.1"
