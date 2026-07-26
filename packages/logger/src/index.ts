@@ -94,15 +94,10 @@ export const logger = (options?: LoggerOptions) => {
 				if (!enabled) return;
 				startTimes.set(context, Date.now());
 				if (isLegacy) {
-					opts.console.log(
-						"Request being sent to:",
-						context.url.toString(),
-					);
+					opts.console.log("Request being sent to:", context.url.toString());
 					return;
 				}
-				opts.console.log(
-					formatPrefix(context.method, context.url),
-				);
+				opts.console.log(formatPrefix(context.method, context.url));
 			},
 			async onSuccess(context) {
 				if (!enabled) return;
@@ -111,14 +106,14 @@ export const logger = (options?: LoggerOptions) => {
 					log("Request succeeded", context.data);
 					return;
 				}
-				const duration = formatDuration(
-					startTimes.get(context.request),
-				);
+				const duration = formatDuration(startTimes.get(context.request));
 				const status = context.response.status;
-				const statusText =
-					context.response.statusText || getStatusText(status);
+				const statusText = context.response.statusText || getStatusText(status);
 				log(
-					`${formatPrefix(context.request.method, context.request.url)} — ${status} ${statusText}${duration}`,
+					`${formatPrefix(
+						context.request.method,
+						context.request.url,
+					)} — ${status} ${statusText}${duration}`,
 				);
 				if (opts.verbose) {
 					opts.console.log(context.data);
@@ -137,7 +132,10 @@ export const logger = (options?: LoggerOptions) => {
 				}
 				const attempt = (response.request.retryAttempt || 0) + 1;
 				log(
-					`${formatPrefix(response.request.method, response.request.url)} — Retry attempt #${attempt}`,
+					`${formatPrefix(
+						response.request.method,
+						response.request.url,
+					)} — Retry attempt #${attempt}`,
 				);
 			},
 			async onError(context) {
@@ -165,14 +163,14 @@ export const logger = (options?: LoggerOptions) => {
 					opts.verbose && obj && opts.console.error(obj);
 					return;
 				}
-				const duration = formatDuration(
-					startTimes.get(context.request),
-				);
+				const duration = formatDuration(startTimes.get(context.request));
 				const status = context.response.status;
-				const statusText =
-					context.response.statusText || getStatusText(status);
+				const statusText = context.response.statusText || getStatusText(status);
 				log(
-					`${formatPrefix(context.request.method, context.request.url)} — ${status} ${statusText}${duration}`,
+					`${formatPrefix(
+						context.request.method,
+						context.request.url,
+					)} — ${status} ${statusText}${duration}`,
 				);
 				if (opts.verbose) {
 					let obj: any;

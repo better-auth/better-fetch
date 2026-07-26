@@ -1,6 +1,6 @@
-import type { StandardSchemaV1 } from "./standard-schema";
 import { getAuthHeader } from "./auth";
 import { methods } from "./create-fetch";
+import type { StandardSchemaV1 } from "./standard-schema";
 import type { BetterFetchOption, FetchEsque } from "./types";
 
 const JSON_RE = /^application\/(?:[\w!#$%&*.^`~-]*\+)?json(;.+)?$/i;
@@ -128,7 +128,9 @@ export function mergeHeaders(
 }
 
 export async function getHeaders(opts?: BetterFetchOption) {
-	const headers = new Headers(mergeHeaders(opts?.headers, await getAuthHeader(opts)));
+	const headers = new Headers(
+		mergeHeaders(opts?.headers, await getAuthHeader(opts)),
+	);
 
 	if (!headers.has("content-type")) {
 		const contentType = detectContentType(opts?.body);

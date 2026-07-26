@@ -68,16 +68,16 @@ describe("fetch", () => {
 		});
 	});
 
-	it.each<Record<string, string>>([
-		{ foo: "bar" },
-		{ foo: "bar", bar: "baz" },
-	])("forwards query params %o", async (query) => {
-		const { data } = await betterFetch<any>(getURL("query"), {
-			method: "GET",
-			query,
-		});
-		expect(data).toMatchObject(query);
-	});
+	it.each<Record<string, string>>([{ foo: "bar" }, { foo: "bar", bar: "baz" }])(
+		"forwards query params %o",
+		async (query) => {
+			const { data } = await betterFetch<any>(getURL("query"), {
+				method: "GET",
+				query,
+			});
+			expect(data).toMatchObject(query);
+		},
+	);
 
 	it("does not stringify the body when content-type is not json", async () => {
 		const message = '"Hallo von Pascal"';
@@ -283,7 +283,8 @@ describe("hooks", () => {
 		const onResponse = vi.fn();
 		const f = createFetch({
 			baseURL: "http://localhost:4001",
-			customFetchImpl: async () => new Response(JSON.stringify({ message: "ok" })),
+			customFetchImpl: async () =>
+				new Response(JSON.stringify({ message: "ok" })),
 			onRequest,
 			onResponse,
 		});
@@ -321,7 +322,8 @@ describe("hooks", () => {
 		const onRequest = vi.fn();
 		const onResponse = vi.fn();
 		const f = createFetch({
-			customFetchImpl: async () => new Response(JSON.stringify({ message: "ok" })),
+			customFetchImpl: async () =>
+				new Response(JSON.stringify({ message: "ok" })),
 			onRequest,
 			onResponse,
 		});
