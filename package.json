@@ -15,16 +15,13 @@
 	},
 	"dependencies": {
 		"@biomejs/biome": "1.7.3",
-		"simple-git-hooks": "^2.11.1",
 		"tinyglobby": "^0.2.9",
 		"vitest": "^1.5.0"
 	},
-	"simple-git-hooks": {
-		"pre-push": "pnpm typecheck"
-	},
 	"devDependencies": {
 		"bumpp": "^9.4.1",
-		"tsup": "^8.0.2"
+		"lefthook": "^2.1.4",
+		"tsdown": "0.22.9"
 	},
 	"packageManager": "pnpm@11.1.1"
 }
