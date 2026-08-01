@@ -60,7 +60,7 @@ Important modules:
 
 - TypeScript
 - pnpm workspaces
-- `tsup` for package builds
+- `tsdown` for package builds
 - Vitest for tests
 - Biome for formatting and import organization
 - Next.js 14, React 18, Tailwind CSS, and Fumadocs for the docs site
