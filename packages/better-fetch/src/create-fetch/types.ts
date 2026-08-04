@@ -1,5 +1,5 @@
-import type { StandardSchemaV1 } from "../standard-schema";
 import type { BetterFetchPlugin } from "../plugins";
+import type { StandardSchemaV1 } from "../standard-schema";
 import type { Prettify, StringLiteralUnion } from "../type-utils";
 import type { BetterFetchOption, BetterFetchResponse } from "../types";
 import type { FetchSchema, Schema } from "./schema";
@@ -44,15 +44,22 @@ export type InferParam<Path, Param> = Param extends StandardSchemaV1
 	? StandardSchemaV1.InferInput<Param>
 	: InferParamPath<Path>;
 
-export type InferOptions<T extends FetchSchema, Key, Res = any> = T["headers"] extends StandardSchemaV1
+export type InferOptions<
+	T extends FetchSchema,
+	Key,
+	Res = any,
+> = T["headers"] extends StandardSchemaV1
 	? WithRequired<
-			Omit<BetterFetchOption<
-				InferBody<T["input"]>,
-				InferQuery<T["query"]>,
-				InferParam<Key, T["params"]>,
-				Res
-			>, "headers"> & {
-				headers?: InferHeaders<T["headers"]>
+			Omit<
+				BetterFetchOption<
+					InferBody<T["input"]>,
+					InferQuery<T["query"]>,
+					InferParam<Key, T["params"]>,
+					Res
+				>,
+				"headers"
+			> & {
+				headers?: InferHeaders<T["headers"]>;
 			},
 			RequiredOptionKeys<T, Key> extends keyof BetterFetchOption
 				? RequiredOptionKeys<T, Key>

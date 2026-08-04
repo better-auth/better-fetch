@@ -5,7 +5,9 @@ import { StandardSchemaV1 } from "./standard-schema";
 import type { Prettify, StringLiteralUnion } from "./type-utils";
 
 type CommonHeaders = {
-	accept?: StringLiteralUnion<"application/json" | "text/plain" | "application/octet-stream">;
+	accept?: StringLiteralUnion<
+		"application/json" | "text/plain" | "application/octet-stream"
+	>;
 	"content-type"?: StringLiteralUnion<
 		| "application/json"
 		| "text/plain"

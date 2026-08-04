@@ -32,11 +32,11 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 						urlKey = urlKey.replace(schema.config.baseURL, "");
 					}
 				}
-				
+
 				if (urlKey.startsWith("/") && urlKey.charAt(1) === "@") {
 					urlKey = urlKey.substring(1);
 				}
-				
+
 				const keySchema = schema.schema[urlKey];
 				if (keySchema) {
 					let validatedHeaders = options?.headers;
@@ -55,26 +55,26 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 								}
 							}
 						}
-						
-						const validated = await parseStandardSchema(
+
+						const validated = (await parseStandardSchema(
 							keySchema.headers,
 							normalizedHeaders,
-						) as Record<string, string | undefined>;
-						
+						)) as Record<string, string | undefined>;
+
 						const finalHeaders: Record<string, string | undefined> = {};
 						for (const [key, value] of Object.entries(validated)) {
 							finalHeaders[key.toLowerCase()] = value;
 						}
 						validatedHeaders = finalHeaders;
 					}
-					
+
 					let opts = {
 						...options,
 						method: keySchema.method,
 						output: keySchema.output,
 						headers: validatedHeaders,
 					};
-					
+
 					if (!options?.disableValidation) {
 						opts = {
 							...opts,
@@ -110,7 +110,11 @@ export const createFetch = <Option extends CreateFetchOption>(
 			...config,
 			...options,
 			headers: mergeHeaders(config?.headers, options?.headers),
-			plugins: [...(config?.plugins || []), applySchemaPlugin(config || {}), ...(options?.plugins || [])],
+			plugins: [
+				...(config?.plugins || []),
+				applySchemaPlugin(config || {}),
+				...(options?.plugins || []),
+			],
 		} as BetterFetchOption;
 
 		if (config?.catchAllError) {
