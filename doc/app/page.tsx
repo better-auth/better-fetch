@@ -11,7 +11,8 @@ export default function HomePage() {
 				<h1 className="mb-4 text-5xl font-bold text-center">Better Fetch</h1>
 
 				<p className="text-muted-foreground mx-auto max-w-2xl text-center">
-					Advanced fetch wrapper for typescript with standard schema validations (using zod, valibot, arktype or any other compliant validator),
+					Advanced fetch wrapper for typescript with standard schema validations
+					(using zod, valibot, arktype or any other compliant validator),
 					pre-defined routes, callbacks, plugins and more.
 				</p>
 				<div className="flex py-4 items-center justify-center gap-4 w-full">

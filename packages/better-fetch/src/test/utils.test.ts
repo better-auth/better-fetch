@@ -26,10 +26,26 @@ describe("getBody", () => {
 	});
 
 	it.each([
-		{ case: "the canonical value", name: "content-type", value: "application/x-www-form-urlencoded" },
-		{ case: "a charset parameter", name: "content-type", value: "application/x-www-form-urlencoded; charset=utf-8" },
-		{ case: "a mixed-case value", name: "content-type", value: "Application/X-WWW-Form-Urlencoded" },
-		{ case: "a mixed-case header name", name: "Content-Type", value: "application/x-www-form-urlencoded" },
+		{
+			case: "the canonical value",
+			name: "content-type",
+			value: "application/x-www-form-urlencoded",
+		},
+		{
+			case: "a charset parameter",
+			name: "content-type",
+			value: "application/x-www-form-urlencoded; charset=utf-8",
+		},
+		{
+			case: "a mixed-case value",
+			name: "content-type",
+			value: "Application/X-WWW-Form-Urlencoded",
+		},
+		{
+			case: "a mixed-case header name",
+			name: "Content-Type",
+			value: "application/x-www-form-urlencoded",
+		},
 	])("encodes a form-urlencoded body given $case", ({ name, value }) => {
 		const body = getBody(
 			{ body: { a: "1", b: "2" } },
