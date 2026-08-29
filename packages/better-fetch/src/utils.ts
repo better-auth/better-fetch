@@ -269,8 +269,8 @@ export function getTimeout(
 	clearTimeout: () => void;
 } {
 	let abortTimeout: TimeoutHandle | undefined;
-	if (!options?.signal && options?.timeout) {
-		abortTimeout = setTimeout(() => controller?.abort(), options?.timeout);
+	if (options?.timeout) {
+		abortTimeout = setTimeout(() => controller?.abort(), options.timeout);
 	}
 	return {
 		abortTimeout,
@@ -279,6 +279,34 @@ export function getTimeout(
 				clearTimeout(abortTimeout);
 			}
 		},
+	};
+}
+
+/**
+ * Forwards a caller supplied signal onto the request's own controller, so the
+ * request can listen to a single signal while still honoring both `signal` and
+ * `timeout`. The caller's reason is preserved on the way through.
+ *
+ * Returns a cleanup that detaches the listener once the request settles, so a
+ * long-lived signal reused across many requests doesn't accumulate listeners.
+ */
+export function forwardAbortSignal(
+	controller: AbortController,
+	signal?: AbortSignal | null,
+): () => void {
+	if (!signal) {
+		return () => {};
+	}
+	if (signal.aborted) {
+		controller.abort(signal.reason);
+		return () => {};
+	}
+	const onAbort = () => {
+		controller.abort(signal.reason);
+	};
+	signal.addEventListener("abort", onAbort, { once: true });
+	return () => {
+		signal.removeEventListener("abort", onAbort);
 	};
 }
 

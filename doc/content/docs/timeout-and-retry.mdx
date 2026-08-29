@@ -24,6 +24,23 @@ const res = await $fetch("/api/users", {
 });
 ```
 
+The timeout composes with your own `signal` — pass both and whichever aborts
+first wins, with the caller's abort reason preserved.
+
+```ts twoslash title="fetch.ts"
+import { createFetch } from "@better-fetch/fetch";
+
+const $fetch = createFetch({
+    baseURL: "http://localhost:3000",
+})
+const controller = new AbortController();
+// ---cut---
+const res = await $fetch("/api/users", {
+    timeout: 10000,
+    signal: controller.signal,
+});
+```
+
 
 ## Auto Retry
 
