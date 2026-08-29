@@ -268,6 +268,20 @@ describe("fetch", () => {
 		).rejects.toBe(reason);
 	});
 
+	it("clears the timeout when the caller aborts before the deadline", async () => {
+		const controller = new AbortController();
+		const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
+		setTimeout(() => controller.abort(), 10);
+		await betterFetch(getURL("ok"), {
+			timeout: 5000,
+			signal: controller.signal,
+			customFetchImpl: hangingFetch,
+		}).catch(() => {});
+		// the armed deadline timer is released, not left to hold the loop
+		expect(clearTimeoutSpy).toHaveBeenCalled();
+		clearTimeoutSpy.mockRestore();
+	});
+
 	it("detaches the forwarded abort listener once the request settles", async () => {
 		const controller = new AbortController();
 		const removeEventListener = vi.spyOn(

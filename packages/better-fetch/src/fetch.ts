@@ -45,6 +45,9 @@ export const betterFetch = async <
 	// onto the controller, and whichever aborts first wins.
 	const releaseSignal = forwardAbortSignal(controller, opts.signal);
 	const signal = controller.signal;
+	// cleared in `finally` too: a rejected fetch (caller abort, network error)
+	// must not leave the timer holding the event loop until the deadline
+	let clearTimeout = () => {};
 	try {
 		const _url = getURL(__url, opts);
 		const headers = await getHeaders(opts);
@@ -80,7 +83,7 @@ export const betterFetch = async <
 			}
 		}
 
-		const { clearTimeout } = getTimeout(opts, controller);
+		clearTimeout = getTimeout(opts, controller).clearTimeout;
 		let response = await fetch(context.url, context);
 		clearTimeout();
 
@@ -224,6 +227,7 @@ export const betterFetch = async <
 			},
 		} as any;
 	} finally {
+		clearTimeout();
 		releaseSignal();
 	}
 };
