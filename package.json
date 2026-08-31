@@ -7,8 +7,7 @@
 		"dev": "pnpm -F fetch dev",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"bump": "bumpp  \"./packages/*/package.json\"",
-		"release": "pnpm --filter \"./packages/*\" build && bumpp && pnpm -r publish --access public",
+		"bump": "bumpp",
 		"typecheck": "pnpm -r typecheck",
 		"lint": "biome check .",
 		"format": "biome check . --apply"
@@ -19,7 +18,7 @@
 		"vitest": "^1.5.0"
 	},
 	"devDependencies": {
-		"bumpp": "^9.4.1",
+		"bumpp": "^12.2.2",
 		"lefthook": "^2.1.4",
 		"tsdown": "0.22.9"
 	},
