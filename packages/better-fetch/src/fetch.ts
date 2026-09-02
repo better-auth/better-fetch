@@ -6,6 +6,7 @@ import type { BetterFetchOption, BetterFetchResponse } from "./types";
 import { getURL } from "./url";
 import {
 	detectResponseType,
+	forwardAbortSignal,
 	getBody,
 	getFetch,
 	getHeaders,
@@ -39,107 +40,152 @@ export const betterFetch = async <
 	} = await initializePlugins(url, options);
 	const fetch = getFetch(opts);
 	const controller = new AbortController();
-	const signal = opts.signal ?? controller.signal;
-	const _url = getURL(__url, opts);
-	const headers = await getHeaders(opts);
-	const body = getBody(opts, headers);
-	const method = getMethod(__url, opts);
-	// one stable object for the whole request so per-request state keyed on
-	// its identity survives hooks that return a replacement context
-	const context = {
-		...opts,
-		url: _url,
-		headers,
-		body,
-		method,
-		signal,
-	};
-	/**
-	 * Run all on request hooks
-	 */
-	for (const onRequest of hooks.onRequest) {
-		if (onRequest) {
-			const res = await onRequest(context);
-			if (typeof res === "object" && res !== null) {
-				Object.assign(context, res);
+	// the request always listens to our own controller so `timeout` stays armed
+	// even when the caller passes a `signal`; the caller's signal is forwarded
+	// onto the controller, and whichever aborts first wins.
+	const releaseSignal = forwardAbortSignal(controller, opts.signal);
+	const signal = controller.signal;
+	// cleared in `finally` too: a rejected fetch (caller abort, network error)
+	// must not leave the timer holding the event loop until the deadline
+	let clearTimeout = () => {};
+	try {
+		const _url = getURL(__url, opts);
+		const headers = await getHeaders(opts);
+		const body = getBody(opts, headers);
+		const method = getMethod(__url, opts);
+		// one stable object for the whole request so per-request state keyed on
+		// its identity survives hooks that return a replacement context
+		const context = {
+			...opts,
+			url: _url,
+			headers,
+			body,
+			method,
+			signal,
+		};
+		/**
+		 * Run all on request hooks
+		 */
+		for (const onRequest of hooks.onRequest) {
+			if (onRequest) {
+				const res = await onRequest(context);
+				if (typeof res === "object" && res !== null) {
+					Object.assign(context, res);
+				}
 			}
 		}
-	}
-	if (
-		("pipeTo" in context && typeof context.pipeTo === "function") ||
-		typeof options?.body?.pipe === "function"
-	) {
-		if (!("duplex" in context)) {
-			context.duplex = "half";
-		}
-	}
-
-	const { clearTimeout } = getTimeout(opts, controller);
-	let response = await fetch(context.url, context);
-	clearTimeout();
-
-	const responseContext = {
-		response,
-		request: context,
-	};
-
-	for (const onResponse of hooks.onResponse) {
-		if (onResponse) {
-			const r = await onResponse({
-				...responseContext,
-				response: options?.hookOptions?.cloneResponse
-					? response.clone()
-					: response,
-			});
-			if (r instanceof Response) {
-				response = r;
-			} else if (typeof r === "object" && r !== null) {
-				response = r.response;
+		if (
+			("pipeTo" in context && typeof context.pipeTo === "function") ||
+			typeof options?.body?.pipe === "function"
+		) {
+			if (!("duplex" in context)) {
+				context.duplex = "half";
 			}
 		}
-	}
 
-	/**
-	 * OK Branch
-	 */
-	if (response.ok) {
-		const hasBody = context.method !== "HEAD";
-		if (!hasBody) {
-			return {
-				data: "" as any,
-				error: null,
-			} as any;
-		}
-		const responseType = detectResponseType(response);
-		const successContext = {
-			data: null as any,
+		clearTimeout = getTimeout(opts, controller).clearTimeout;
+		let response = await fetch(context.url, context);
+		clearTimeout();
+
+		const responseContext = {
 			response,
 			request: context,
 		};
-		if (responseType === "json" || responseType === "text") {
-			const text = await response.text();
-			const parser = context.jsonParser ?? jsonParse;
-			successContext.data = await parser(text);
-		} else {
-			successContext.data = await response[responseType]();
-		}
 
-		/**
-		 * Parse the data if the output schema is defined
-		 */
-		if (context?.output) {
-			if (context.output && !context.disableValidation) {
-				successContext.data = await parseStandardSchema(
-					context.output as StandardSchemaV1,
-					successContext.data,
-				);
+		for (const onResponse of hooks.onResponse) {
+			if (onResponse) {
+				const r = await onResponse({
+					...responseContext,
+					response: options?.hookOptions?.cloneResponse
+						? response.clone()
+						: response,
+				});
+				if (r instanceof Response) {
+					response = r;
+				} else if (typeof r === "object" && r !== null) {
+					response = r.response;
+				}
 			}
 		}
 
-		for (const onSuccess of hooks.onSuccess) {
-			if (onSuccess) {
-				await onSuccess({
-					...successContext,
+		/**
+		 * OK Branch
+		 */
+		if (response.ok) {
+			const hasBody = context.method !== "HEAD";
+			if (!hasBody) {
+				return {
+					data: "" as any,
+					error: null,
+				} as any;
+			}
+			const responseType = detectResponseType(response);
+			const successContext = {
+				data: null as any,
+				response,
+				request: context,
+			};
+			if (responseType === "json" || responseType === "text") {
+				const text = await response.text();
+				const parser = context.jsonParser ?? jsonParse;
+				successContext.data = await parser(text);
+			} else {
+				successContext.data = await response[responseType]();
+			}
+
+			/**
+			 * Parse the data if the output schema is defined
+			 */
+			if (context?.output) {
+				if (context.output && !context.disableValidation) {
+					successContext.data = await parseStandardSchema(
+						context.output as StandardSchemaV1,
+						successContext.data,
+					);
+				}
+			}
+
+			for (const onSuccess of hooks.onSuccess) {
+				if (onSuccess) {
+					await onSuccess({
+						...successContext,
+						response: options?.hookOptions?.cloneResponse
+							? response.clone()
+							: response,
+					});
+				}
+			}
+
+			if (options?.throw) {
+				return successContext.data;
+			}
+
+			return {
+				data: successContext.data,
+				error: null,
+			} as any;
+		}
+		const parser = options?.jsonParser ?? jsonParse;
+		const responseText = await response.text();
+		const isJSONResponse = isJSONParsable(responseText);
+		const errorObject = isJSONResponse ? await parser(responseText) : null;
+		/**
+		 * Error Branch
+		 */
+		const errorContext = {
+			response,
+			responseText,
+			request: context,
+			error: {
+				...errorObject,
+				status: response.status,
+				statusText: response.statusText,
+			},
+		};
+		for (const onError of hooks.onError) {
+			if (onError) {
+				await onError({
+					...errorContext,
 					response: options?.hookOptions?.cloneResponse
 						? response.clone()
 						: response,
@@ -147,74 +193,41 @@ export const betterFetch = async <
 			}
 		}
 
-		if (options?.throw) {
-			return successContext.data;
-		}
-
-		return {
-			data: successContext.data,
-			error: null,
-		} as any;
-	}
-	const parser = options?.jsonParser ?? jsonParse;
-	const responseText = await response.text();
-	const isJSONResponse = isJSONParsable(responseText);
-	const errorObject = isJSONResponse ? await parser(responseText) : null;
-	/**
-	 * Error Branch
-	 */
-	const errorContext = {
-		response,
-		responseText,
-		request: context,
-		error: {
-			...errorObject,
-			status: response.status,
-			statusText: response.statusText,
-		},
-	};
-	for (const onError of hooks.onError) {
-		if (onError) {
-			await onError({
-				...errorContext,
-				response: options?.hookOptions?.cloneResponse
-					? response.clone()
-					: response,
-			});
-		}
-	}
-
-	if (options?.retry) {
-		const retryStrategy = createRetryStrategy(options.retry);
-		const _retryAttempt = options.retryAttempt ?? 0;
-		if (await retryStrategy.shouldAttemptRetry(_retryAttempt, response)) {
-			for (const onRetry of hooks.onRetry) {
-				if (onRetry) {
-					await onRetry(responseContext);
+		if (options?.retry) {
+			const retryStrategy = createRetryStrategy(options.retry);
+			const _retryAttempt = options.retryAttempt ?? 0;
+			if (await retryStrategy.shouldAttemptRetry(_retryAttempt, response)) {
+				for (const onRetry of hooks.onRetry) {
+					if (onRetry) {
+						await onRetry(responseContext);
+					}
 				}
+				const delay = retryStrategy.getDelay(_retryAttempt);
+				await new Promise((resolve) => setTimeout(resolve, delay));
+				return await betterFetch(url, {
+					...options,
+					retryAttempt: _retryAttempt + 1,
+				});
 			}
-			const delay = retryStrategy.getDelay(_retryAttempt);
-			await new Promise((resolve) => setTimeout(resolve, delay));
-			return await betterFetch(url, {
-				...options,
-				retryAttempt: _retryAttempt + 1,
-			});
 		}
-	}
 
-	if (options?.throw) {
-		throw new BetterFetchError(
-			response.status,
-			response.statusText,
-			isJSONResponse ? errorObject : responseText,
-		);
+		if (options?.throw) {
+			throw new BetterFetchError(
+				response.status,
+				response.statusText,
+				isJSONResponse ? errorObject : responseText,
+			);
+		}
+		return {
+			data: null,
+			error: {
+				...errorObject,
+				status: response.status,
+				statusText: response.statusText,
+			},
+		} as any;
+	} finally {
+		clearTimeout();
+		releaseSignal();
 	}
-	return {
-		data: null,
-		error: {
-			...errorObject,
-			status: response.status,
-			statusText: response.statusText,
-		},
-	} as any;
 };
