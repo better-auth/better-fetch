@@ -7,7 +7,6 @@ const JSON_RE = /^application\/(?:[\w!#$%&*.^`~-]*\+)?json(;.+)?$/i;
 
 type RequestBody = Exclude<RequestInit["body"], undefined>;
 type RequestHeaders = RequestInit["headers"];
-type TimeoutHandle = ReturnType<typeof setTimeout>;
 
 export type ResponseType = "json" | "text" | "blob";
 export function detectResponseType(request: Response): ResponseType {
