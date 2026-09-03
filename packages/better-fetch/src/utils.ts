@@ -5,6 +5,9 @@ import type { BetterFetchOption, FetchEsque } from "./types";
 
 const JSON_RE = /^application\/(?:[\w!#$%&*.^`~-]*\+)?json(;.+)?$/i;
 
+type RequestBody = Exclude<RequestInit["body"], undefined>;
+type RequestHeaders = RequestInit["headers"];
+
 export type ResponseType = "json" | "text" | "blob";
 export function detectResponseType(request: Response): ResponseType {
 	const _contentType = request.headers.get("content-type");
@@ -102,7 +105,7 @@ export function isRouteMethod(method?: string) {
 }
 
 export function mergeHeaders(
-	...sources: (HeadersInit | Record<string, string | undefined> | undefined)[]
+	...sources: (RequestHeaders | Record<string, string | undefined>)[]
 ): Record<string, string> {
 	const merged: Record<string, string> = {};
 	for (const source of sources) {
@@ -225,13 +228,13 @@ function getMediaType(headers: Headers): string | null {
 export function getBody(
 	options: BetterFetchOption,
 	headers: Headers,
-): BodyInit | null {
+): RequestBody {
 	const { body } = options;
 	if (!body) {
 		return null;
 	}
 	if (!isJSONSerializable(body)) {
-		return body as BodyInit;
+		return body as RequestBody;
 	}
 	if (typeof body === "string") {
 		return body;
@@ -256,14 +259,16 @@ export function getMethod(url: string, options?: BetterFetchOption) {
 	return options?.body ? "POST" : "GET";
 }
 
+type TimeoutHandle = ReturnType<typeof setTimeout>;
+
 export function getTimeout(
 	options?: BetterFetchOption,
 	controller?: AbortController,
 ): {
-	abortTimeout: ReturnType<typeof setTimeout> | undefined;
+	abortTimeout: TimeoutHandle | undefined;
 	clearTimeout: () => void;
 } {
-	let abortTimeout: ReturnType<typeof setTimeout> | undefined;
+	let abortTimeout: TimeoutHandle | undefined;
 	if (!options?.signal && options?.timeout) {
 		abortTimeout = setTimeout(() => controller?.abort(), options?.timeout);
 	}

@@ -31,6 +31,9 @@ export type PayloadMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export type NonPayloadMethod = "GET" | "HEAD" | "OPTIONS";
 export type Method = PayloadMethod | NonPayloadMethod;
 
+type BetterFetchRequestInit = Omit<RequestInit, "body" | "headers">;
+type BetterFetchOptionShape<T> = BetterFetchRequestInit & Prettify<T>;
+
 export type BetterFetchOption<
 	Body = any,
 	Query extends Record<string, any> = any,
@@ -38,9 +41,8 @@ export type BetterFetchOption<
 	Res = any,
 	ExtraOptions extends Record<string, any> = {},
 	Headers extends Record<string, string> = {},
-> = Prettify<
+> = BetterFetchOptionShape<
 	ExtraOptions &
-		Omit<RequestInit, "body" | "headers"> &
 		FetchHooks<Res> & {
 			/**
 			 * a timeout that will be used to abort the
