@@ -9,7 +9,7 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 		id: "apply-schema",
 		name: "Apply Schema",
 		version: "1.0.0",
-		async init(url, options) {
+		async init(url, options: BetterFetchOption | undefined) {
 			const schema =
 				config.plugins?.find((plugin) =>
 					plugin.schema?.config
