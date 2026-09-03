@@ -1,0 +1,12 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["ES2022"],
+		"paths": {
+			"bun": ["./node_modules/bun-types/bun.d.ts"],
+			"bun:*": ["./node_modules/bun-types/*.d.ts"],
+			"undici-types": ["./node_modules/undici-types/index.d.ts"]
+		},
+		"types": ["bun-types"]
+	}
+}

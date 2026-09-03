@@ -1,0 +1,15 @@
+{
+	"name": "@better-fetch/typecheck-consumers",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"typecheck": "tsc --project tsconfig.dom.json && tsc --project tsconfig.webworker.json && tsc --project tsconfig.node.json && tsc --project tsconfig.node-cjs.json && tsc --project tsconfig.bun.json"
+	},
+	"devDependencies": {
+		"@better-fetch/fetch": "workspace:*",
+		"@types/node": "26.4.1",
+		"bun-types": "1.4.0",
+		"typescript": "6.0.3",
+		"undici-types": "8.10.1"
+	}
+}
