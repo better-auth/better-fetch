@@ -256,14 +256,16 @@ export function getMethod(url: string, options?: BetterFetchOption) {
 	return options?.body ? "POST" : "GET";
 }
 
+type TimeoutHandle = ReturnType<typeof setTimeout>;
+
 export function getTimeout(
 	options?: BetterFetchOption,
 	controller?: AbortController,
 ): {
-	abortTimeout: ReturnType<typeof setTimeout> | undefined;
+	abortTimeout: TimeoutHandle | undefined;
 	clearTimeout: () => void;
 } {
-	let abortTimeout: ReturnType<typeof setTimeout> | undefined;
+	let abortTimeout: TimeoutHandle | undefined;
 	if (!options?.signal && options?.timeout) {
 		abortTimeout = setTimeout(() => controller?.abort(), options?.timeout);
 	}
