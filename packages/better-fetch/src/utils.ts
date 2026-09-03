@@ -260,6 +260,8 @@ export function getMethod(url: string, options?: BetterFetchOption) {
 	return options?.body ? "POST" : "GET";
 }
 
+type TimeoutHandle = ReturnType<typeof setTimeout>;
+
 export function getTimeout(
 	options?: BetterFetchOption,
 	controller?: AbortController,
