@@ -182,6 +182,27 @@ describe("create-fetch-runtime-test", () => {
 		});
 	});
 
+	it("merges instance query values with schema query values", async () => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			query: { apiKey: "secret" },
+			schema: createSchema({
+				"/movies": {
+					query: z.object({ id: z.string() }),
+				},
+			}),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/movies", { query: { id: "42" } });
+
+		expect(requestURL).toBe("https://example.com/movies?apiKey=secret&id=42");
+	});
+
 	it("should validate response and return data if validation passes", async () => {
 		const res = await $fetch("/echo", {
 			output: z.object({
