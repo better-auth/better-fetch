@@ -96,6 +96,7 @@ export type BetterFetchOption<
 			params?: Params;
 			/**
 			 * Duplex mode
+			 * @see https://fetch.spec.whatwg.org/#enumdef-requestduplex
 			 */
 			duplex?: "half";
 			/**
