@@ -86,7 +86,7 @@ export type InferHeaders<H> = H extends StandardSchemaV1
 	: Record<string, string>;
 
 export type IsFieldOptional<T> = T extends StandardSchemaV1
-	? undefined extends T
+	? undefined extends StandardSchemaV1.InferInput<T>
 		? true
 		: false
 	: true;

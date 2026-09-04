@@ -182,6 +182,28 @@ describe("create-fetch-runtime-test", () => {
 		});
 	});
 
+	it("applies a default query when options are omitted", async () => {
+		let requestQuery: unknown;
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			schema: createSchema({
+				"/movies": {
+					query: z
+						.object({ include: z.array(z.string()) })
+						.default({ include: ["recommendations"] }),
+				},
+			}),
+			customFetchImpl: async () => new Response(),
+			onRequest(context) {
+				requestQuery = context.query;
+			},
+		});
+
+		await fetch("/movies");
+
+		expect(requestQuery).toEqual({ include: ["recommendations"] });
+	});
+
 	it("should validate response and return data if validation passes", async () => {
 		const res = await $fetch("/echo", {
 			output: z.object({
