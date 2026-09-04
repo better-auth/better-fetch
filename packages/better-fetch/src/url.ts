@@ -5,7 +5,10 @@ const isReservedPathSegment = (value: string) =>
 	value === "." || value === "..";
 
 const encodeLiteralPathSegment = (segment: string) =>
-	encodeURIComponent(segment).replace(/%3A/g, ":");
+	segment
+		.split(":")
+		.map((part) => encodeURIComponent(part))
+		.join(":");
 
 function resolvePathSegment(segment: string, pathParams: Map<string, string>) {
 	const pathParam = pathParams.get(segment);
