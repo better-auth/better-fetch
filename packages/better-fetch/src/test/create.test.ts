@@ -12,6 +12,7 @@ import { z } from "zod";
 import {
 	BetterFetch,
 	type FetchSchemaRoutes,
+	type InferParamPath,
 	createFetch,
 	createSchema,
 	methods,
@@ -429,6 +430,12 @@ describe("create-fetch-type-test", () => {
 		).toMatchTypeOf<Promise<BetterFetchResponse<unknown>>>();
 	});
 
+	it("infers a leading dynamic path segment", () => {
+		expectTypeOf<InferParamPath<":id/details">>().toEqualTypeOf<{
+			id: string;
+		}>();
+	});
+
 	it("should infer default response and error types", () => {
 		const $fetch = createFetch({
 			baseURL: "http://localhost:4001",
@@ -472,8 +479,8 @@ describe("create-fetch-type-test", () => {
 			params: {},
 		});
 		$fetch("/post/:id/:title", {
-			//@ts-expect-error
 			params: {
+				//@ts-expect-error
 				title: 1,
 			},
 		});

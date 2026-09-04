@@ -27,18 +27,15 @@ export type RemoveEmptyString<T> = T extends string
 		: T
 	: T;
 
-export type InferParamPath<Path> =
-	Path extends `${infer _Start}/:${infer Param}/${infer Rest}`
-		? {
-				[K in
-					| Param
-					| keyof InferParamPath<Rest> as RemoveEmptyString<K>]: string;
-			}
-		: Path extends `${infer _Start}/:${infer Param}`
-			? { [K in Param]: string }
-			: Path extends `${infer _Start}/${infer Rest}`
-				? InferParamPath<Rest>
-				: {};
+type InferParamSegment<Segment> = Segment extends `:${infer Param}`
+	? RemoveEmptyString<Param>
+	: never;
+
+export type InferParamPath<Path> = Path extends `${infer Segment}/${infer Rest}`
+	? {
+			[K in InferParamSegment<Segment> | keyof InferParamPath<Rest>]: string;
+		}
+	: { [K in InferParamSegment<Path>]: string };
 
 export type InferParam<Path, Param> = Param extends StandardSchemaV1
 	? StandardSchemaV1.InferInput<Param>
