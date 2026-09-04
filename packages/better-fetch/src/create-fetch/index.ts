@@ -2,6 +2,7 @@ import { betterFetch } from "../fetch";
 import { BetterFetchPlugin } from "../plugins";
 import type { BetterFetchOption } from "../types";
 import { mergeHeaders, parseStandardSchema } from "../utils";
+import { methods } from "./schema";
 import type { BetterFetch, CreateFetchOption } from "./types";
 
 export const applySchemaPlugin = (config: CreateFetchOption) =>
@@ -37,8 +38,18 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 					urlKey = urlKey.substring(1);
 				}
 
+				const methodModifier = urlKey.startsWith("@")
+					? urlKey.slice(1).split("/")[0]
+					: undefined;
+				const schemaMethod =
+					methodModifier && methods.includes(methodModifier)
+						? methodModifier
+						: undefined;
 				const keySchema = schema.schema[urlKey];
 				if (keySchema) {
+					if (schemaMethod) {
+						url = url.replace(`@${schemaMethod}/`, "");
+					}
 					let validatedHeaders = options?.headers;
 					if (keySchema.headers && !options?.disableValidation) {
 						const normalizedHeaders: Record<string, string> = {};
@@ -70,7 +81,7 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 
 					let opts = {
 						...options,
-						method: keySchema.method,
+						method: keySchema.method ?? schemaMethod,
 						output: keySchema.output,
 						headers: validatedHeaders,
 					};

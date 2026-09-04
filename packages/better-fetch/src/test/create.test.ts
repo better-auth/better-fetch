@@ -254,6 +254,31 @@ describe("create-fetch-runtime-test", () => {
 		});
 	});
 
+	it("applies a method modifier after a schema prefix", async () => {
+		let request: { method: string; url: string } | undefined;
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			schema: createSchema(
+				{ "@put/me/profile": {} },
+				{ prefix: "/api/v1/", strict: true },
+			),
+			customFetchImpl: async (input, init) => {
+				request = {
+					method: init?.method ?? "",
+					url: input.toString(),
+				};
+				return new Response();
+			},
+		});
+
+		await fetch("/api/v1/@put/me/profile");
+
+		expect(request).toEqual({
+			method: "PUT",
+			url: "https://example.com/api/v1/me/profile",
+		});
+	});
+
 	it("keeps the request-context identity stable across replacing hooks", async () => {
 		const seen: object[] = [];
 		const capture = (id: string): BetterFetchPlugin => ({
