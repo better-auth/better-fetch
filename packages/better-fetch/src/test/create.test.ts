@@ -669,7 +669,7 @@ describe("plugin", () => {
 			name: "Read timeout",
 			init(url, options) {
 				receivedTimeout = options?.timeout;
-				return { url, options };
+				return { url };
 			},
 		} satisfies BetterFetchPlugin;
 		const fetch = createFetch({
