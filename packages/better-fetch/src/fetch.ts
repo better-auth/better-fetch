@@ -103,6 +103,25 @@ export const betterFetch = async <
 	 * OK Branch
 	 */
 	if (response.ok) {
+		if (options?.retry) {
+			const retryStrategy = createRetryStrategy(options.retry);
+			const retryAttempt = options.retryAttempt ?? 0;
+			if (
+				await retryStrategy.shouldAttemptRetry(retryAttempt, response.clone())
+			) {
+				for (const onRetry of hooks.onRetry) {
+					if (onRetry) await onRetry(responseContext);
+				}
+				await new Promise((resolve) =>
+					setTimeout(resolve, retryStrategy.getDelay(retryAttempt)),
+				);
+				return await betterFetch(url, {
+					...options,
+					retryAttempt: retryAttempt + 1,
+				});
+			}
+		}
+
 		const hasBody = context.method !== "HEAD";
 		if (!hasBody) {
 			return {
