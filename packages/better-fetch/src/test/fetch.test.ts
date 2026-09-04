@@ -36,6 +36,15 @@ describe("fetch", () => {
 		expect(data).toBe("ok");
 	});
 
+	it("supports an absolute baseURL in a fetch instance", async () => {
+		const fetch = createFetch({ baseURL: getURL() });
+
+		await expect(fetch("/ok")).resolves.toEqual({
+			data: "ok",
+			error: null,
+		});
+	});
+
 	it("stringifies an object body automatically", async () => {
 		const { data } = await betterFetch<{ body: { num: number } }>(
 			getURL("post"),
