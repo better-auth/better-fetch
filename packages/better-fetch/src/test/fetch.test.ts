@@ -335,6 +335,7 @@ describe("hooks", () => {
 					status: 500,
 				}),
 			async onError({ response }) {
+				if (!response) throw new Error("Expected an HTTP response");
 				errorResponseText = await response.text();
 			},
 			hookOptions: { cloneResponse: true },
