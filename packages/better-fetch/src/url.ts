@@ -4,10 +4,13 @@ import type { BetterFetchOption } from "./types";
 const isReservedPathSegment = (value: string) =>
 	value === "." || value === "..";
 
+const encodeLiteralPathSegment = (segment: string) =>
+	encodeURIComponent(segment).replace(/%3A/g, ":");
+
 function resolvePathSegment(segment: string, pathParams: Map<string, string>) {
 	const pathParam = pathParams.get(segment);
 	if (pathParam === undefined) {
-		return segment;
+		return encodeLiteralPathSegment(segment);
 	}
 	if (isReservedPathSegment(pathParam)) {
 		throw new TypeError("Path parameters cannot be reserved path segments");

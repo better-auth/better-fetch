@@ -96,6 +96,13 @@ describe("url", () => {
 		);
 	});
 
+	it("encodes fragment markers in literal path segments", () => {
+		const url = getURL("/files/report#draft", {
+			baseURL: "https://api.example.com",
+		});
+		expect(url.toString()).toBe("https://api.example.com/files/report%23draft");
+	});
+
 	it("encodes array path params as single path segments", () => {
 		const url = getURL("/v1/:resource/:id", {
 			params: ["teams/engineering", "current"],
