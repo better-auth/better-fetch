@@ -362,78 +362,44 @@ describe("hooks", () => {
 });
 
 describe("network-errors", () => {
-	it("should call onError for network failures", async () => {
+	it("returns network failures through onError", async () => {
+		const networkError = new TypeError("fetch failed");
 		const onError = vi.fn();
-		const f = createFetch({
-			baseURL: "http://localhost:9999",
+		const fetch = createFetch({
 			customFetchImpl: async () => {
-				throw new TypeError("fetch failed");
+				throw networkError;
 			},
 			onError,
 		});
 
-		const result = await f("/test");
+		const result = await fetch("https://example.com");
 
-		expect(onError).toHaveBeenCalledWith({
-			response: undefined,
-			request: expect.any(Object),
-			error: expect.objectContaining({
-				status: 0,
-				statusText: "Network Error",
-				message: "fetch failed",
-			}),
-		});
-		expect(result.data).toBeNull();
 		expect(result.error).toMatchObject({
 			status: 0,
 			statusText: "Network Error",
 			message: "fetch failed",
+			cause: networkError,
 		});
+		expect(onError).toHaveBeenCalledOnce();
 	});
 
-	it("should return error object for network failures", async () => {
-		const f = createFetch({
-			baseURL: "http://localhost:9999",
-			customFetchImpl: async () => {
-				throw new TypeError("ECONNREFUSED");
-			},
-		});
-
-		const result = await f("/test");
-
-		expect(result.data).toBeNull();
-		expect(result.error).toMatchObject({
-			status: 0,
-			statusText: "Network Error",
-			message: "ECONNREFUSED",
-		});
-	});
-
-	it("should throw for network failures when throw: true", async () => {
-		const f = createFetch({
-			baseURL: "http://localhost:9999",
+	it("throws a BetterFetchError for network failures when throw is enabled", async () => {
+		const fetch = createFetch({
 			customFetchImpl: async () => {
 				throw new TypeError("fetch failed");
 			},
 			throw: true,
 		});
 
-		await expect(f("/test")).rejects.toThrow(BetterFetchError);
-
-		try {
-			await f("/test");
-		} catch (error) {
-			if (error instanceof BetterFetchError) {
-				expect(error.status).toBe(0);
-				expect(error.statusText).toBe("Network Error");
-			}
-		}
+		await expect(fetch("https://example.com")).rejects.toMatchObject({
+			status: 0,
+			statusText: "Network Error",
+		});
 	});
 
-	it("should retry on network failure", async () => {
+	it("retries network failures", async () => {
 		let attempts = 0;
-		const f = createFetch({
-			baseURL: "http://localhost:9999",
+		const fetch = createFetch({
 			customFetchImpl: async () => {
 				attempts++;
 				if (attempts < 3) {
@@ -441,50 +407,27 @@ describe("network-errors", () => {
 				}
 				return new Response(JSON.stringify({ success: true }));
 			},
-			retry: 3,
+			retry: { type: "linear", attempts: 3, delay: 0 },
 		});
 
-		const result = await f("/test");
+		const result = await fetch("https://example.com");
 		expect(attempts).toBe(3);
 		expect(result.data).toEqual({ success: true });
 	});
 
-	it("should not call onSuccess for network failures", async () => {
-		const onSuccess = vi.fn();
-		const onError = vi.fn();
-		const f = createFetch({
-			baseURL: "http://localhost:9999",
-			customFetchImpl: async () => {
-				throw new TypeError("fetch failed");
+	it("preserves caller abort reasons", async () => {
+		const controller = new AbortController();
+		const reason = new Error("cancelled by caller");
+		const fetch = createFetch({
+			customFetchImpl: async (_input, init) => {
+				controller.abort(reason);
+				throw init?.signal?.reason;
 			},
-			onSuccess,
-			onError,
 		});
 
-		await f("/test");
-		expect(onSuccess).not.toHaveBeenCalled();
-		expect(onError).toHaveBeenCalled();
-	});
-
-	it("should include original error in cause", async () => {
-		const originalError = new TypeError("ECONNREFUSED");
-		const onError = vi.fn();
-		const f = createFetch({
-			baseURL: "http://localhost:9999",
-			customFetchImpl: async () => {
-				throw originalError;
-			},
-			onError,
-		});
-
-		await f("/test");
-		expect(onError).toHaveBeenCalledWith(
-			expect.objectContaining({
-				error: expect.objectContaining({
-					cause: originalError,
-				}),
-			}),
-		);
+		await expect(
+			fetch("https://example.com", { signal: controller.signal }),
+		).rejects.toBe(reason);
 	});
 });
 

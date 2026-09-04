@@ -2,7 +2,6 @@ import { BetterFetchError } from "./error";
 import {
 	type ErrorContext,
 	type FetchHooks,
-	type RequestContext,
 	initializePlugins,
 } from "./plugins";
 import { createRetryStrategy } from "./retry";
@@ -29,7 +28,6 @@ type ErrorHandlerParams = {
 	};
 	options?: BetterFetchOption;
 	url: string;
-	fetchFn: typeof betterFetch;
 	cloneResponse?: boolean;
 	throwError?: unknown;
 };
@@ -39,7 +37,6 @@ async function handleError({
 	hooks,
 	options,
 	url,
-	fetchFn,
 	cloneResponse,
 	throwError,
 }: ErrorHandlerParams): Promise<{ data: null; error: unknown }> {
@@ -74,7 +71,7 @@ async function handleError({
 			}
 			const delay = retryStrategy.getDelay(_retryAttempt);
 			await new Promise((resolve) => setTimeout(resolve, delay));
-			return await fetchFn(url, {
+			return await betterFetch(url, {
 				...options,
 				retryAttempt: _retryAttempt + 1,
 			});
@@ -162,7 +159,8 @@ export const betterFetch = async <
 		clearTimeout();
 
 		const isAbortError =
-			fetchError instanceof DOMException && fetchError.name === "AbortError";
+			context.signal.aborted ||
+			(fetchError instanceof DOMException && fetchError.name === "AbortError");
 		if (isAbortError) {
 			throw fetchError;
 		}
@@ -175,7 +173,7 @@ export const betterFetch = async <
 			cause: fetchError,
 		};
 
-		return handleError({
+		return (await handleError({
 			errorContext: {
 				response: undefined,
 				request: context,
@@ -184,8 +182,11 @@ export const betterFetch = async <
 			hooks,
 			options,
 			url,
-			fetchFn: betterFetch,
-		}) as any;
+		})) as BetterFetchResponse<
+			TRes,
+			TErr,
+			Option["throw"] extends true ? true : TErr extends false ? true : false
+		>;
 	}
 
 	clearTimeout();
@@ -276,7 +277,7 @@ export const betterFetch = async <
 	const isJSONResponse = isJSONParsable(responseText);
 	const errorObject = isJSONResponse ? await parser(responseText) : null;
 
-	return handleError({
+	return (await handleError({
 		errorContext: {
 			response,
 			responseText,
@@ -290,8 +291,11 @@ export const betterFetch = async <
 		hooks,
 		options,
 		url,
-		fetchFn: betterFetch,
 		cloneResponse: options?.hookOptions?.cloneResponse,
 		throwError: isJSONResponse ? errorObject : responseText,
-	}) as any;
+	})) as BetterFetchResponse<
+		TRes,
+		TErr,
+		Option["throw"] extends true ? true : TErr extends false ? true : false
+	>;
 };
