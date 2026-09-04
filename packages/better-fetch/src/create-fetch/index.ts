@@ -68,18 +68,18 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 						validatedHeaders = finalHeaders;
 					}
 
-					let opts = {
+					const opts = {
 						...options,
-						...(keySchema.method !== undefined && { method: keySchema.method }),
-						...(keySchema.output !== undefined && { output: keySchema.output }),
+						...(keySchema.method !== undefined && {
+							method: keySchema.method,
+						}),
+						...(keySchema.output !== undefined && {
+							output: keySchema.output,
+						}),
 						...(validatedHeaders !== undefined && {
 							headers: validatedHeaders,
 						}),
-					};
-
-					if (!options?.disableValidation) {
-						opts = {
-							...opts,
+						...(!options?.disableValidation && {
 							body: keySchema.input
 								? await parseStandardSchema(keySchema.input, options?.body)
 								: options?.body,
@@ -89,8 +89,8 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 							query: keySchema.query
 								? await parseStandardSchema(keySchema.query, options?.query)
 								: options?.query,
-						};
-					}
+						}),
+					};
 					return {
 						url,
 						options: opts,
@@ -99,7 +99,7 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 			}
 			return {
 				url,
-				...(options != null ? { options } : undefined),
+				...(options !== undefined && { options }),
 			};
 		},
 	}) satisfies BetterFetchPlugin;
