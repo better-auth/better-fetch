@@ -12,6 +12,7 @@ import { z } from "zod";
 import {
 	BetterFetch,
 	type FetchSchemaRoutes,
+	type InferParamPath,
 	createFetch,
 	createSchema,
 	methods,
@@ -219,6 +220,26 @@ describe("create-fetch-runtime-test", () => {
 		}
 	});
 
+	it("treats literal colons as path text", async () => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://places.googleapis.com",
+			schema: createSchema({
+				"/v1/places:searchNearby": {},
+			}),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/v1/places:searchNearby");
+
+		expect(requestURL).toBe(
+			"https://places.googleapis.com/v1/places:searchNearby",
+		);
+	});
+
 	it("should apply method", async () => {
 		const $f = createFetch({
 			baseURL: "http://localhost:4001",
@@ -407,6 +428,12 @@ describe("create-fetch-type-test", () => {
 				},
 			}),
 		).toMatchTypeOf<Promise<BetterFetchResponse<unknown>>>();
+	});
+
+	it("infers a leading dynamic path segment", () => {
+		expectTypeOf<InferParamPath<":id/details">>().toEqualTypeOf<{
+			id: string;
+		}>();
 	});
 
 	it("should infer default response and error types", () => {
