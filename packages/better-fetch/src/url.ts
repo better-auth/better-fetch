@@ -4,16 +4,15 @@ import type { BetterFetchOption } from "./types";
 const isReservedPathSegment = (value: string) =>
 	value === "." || value === "..";
 
-function encodePathSegment(segment: string, pathParams: Map<string, string>) {
+function resolvePathSegment(segment: string, pathParams: Map<string, string>) {
 	const pathParam = pathParams.get(segment);
-	const pathSegment = pathParam ?? segment;
-	if (isReservedPathSegment(pathSegment)) {
+	if (pathParam === undefined) {
+		return segment;
+	}
+	if (isReservedPathSegment(pathParam)) {
 		throw new TypeError("Path parameters cannot be reserved path segments");
 	}
-	const encodedSegment = encodeURIComponent(pathSegment);
-	return pathParam === undefined
-		? encodedSegment.replace(/%3A/g, ":")
-		: encodedSegment;
+	return encodeURIComponent(pathParam);
 }
 
 /**
@@ -74,7 +73,7 @@ export function getURL(url: string, option?: BetterFetchOption) {
 
 	path = path
 		.split("/")
-		.map((segment) => encodePathSegment(segment, pathParams))
+		.map((segment) => resolvePathSegment(segment, pathParams))
 		.join("/");
 	path = path.replace(/^\/+/, "");
 	let queryParamString = queryParams.toString();
