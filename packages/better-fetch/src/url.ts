@@ -5,14 +5,15 @@ const isReservedPathSegment = (value: string) =>
 	value === "." || value === "..";
 
 function encodePathSegment(segment: string, pathParams: Map<string, string>) {
-	let pathSegment = segment;
-	for (const [key, value] of pathParams) {
-		pathSegment = pathSegment.replace(key, value);
-	}
+	const pathParam = pathParams.get(segment);
+	const pathSegment = pathParam ?? segment;
 	if (isReservedPathSegment(pathSegment)) {
 		throw new TypeError("Path parameters cannot be reserved path segments");
 	}
-	return encodeURIComponent(pathSegment);
+	const encodedSegment = encodeURIComponent(pathSegment);
+	return pathParam === undefined
+		? encodedSegment.replace(/%3A/g, ":")
+		: encodedSegment;
 }
 
 /**
