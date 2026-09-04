@@ -217,8 +217,6 @@ describe("fetch", () => {
 		).rejects.toThrow(/aborted/);
 	});
 
-	// only ever settles by abort, so the request's deadline is the only thing
-	// that can end it
 	const hangingFetch: FetchEsque = (_url, init) =>
 		new Promise<Response>((_, reject) => {
 			const signal = init?.signal;
@@ -272,12 +270,13 @@ describe("fetch", () => {
 		const controller = new AbortController();
 		const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
 		setTimeout(() => controller.abort(), 10);
-		await betterFetch(getURL("ok"), {
-			timeout: 5000,
-			signal: controller.signal,
-			customFetchImpl: hangingFetch,
-		}).catch(() => {});
-		// the armed deadline timer is released, not left to hold the loop
+		await expect(
+			betterFetch(getURL("ok"), {
+				timeout: 5000,
+				signal: controller.signal,
+				customFetchImpl: hangingFetch,
+			}),
+		).rejects.toThrow(/aborted/);
 		expect(clearTimeoutSpy).toHaveBeenCalled();
 		clearTimeoutSpy.mockRestore();
 	});

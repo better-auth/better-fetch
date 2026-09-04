@@ -24,7 +24,7 @@ const res = await $fetch("/api/users", {
 });
 ```
 
-The timeout composes with your own `signal` — pass both and whichever aborts
+The timeout composes with your own `signal`. Pass both and whichever aborts
 first wins, with the caller's abort reason preserved.
 
 ```ts twoslash title="fetch.ts"

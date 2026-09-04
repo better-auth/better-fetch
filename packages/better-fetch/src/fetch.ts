@@ -40,14 +40,9 @@ export const betterFetch = async <
 	} = await initializePlugins(url, options);
 	const fetch = getFetch(opts);
 	const controller = new AbortController();
-	// the request always listens to our own controller so `timeout` stays armed
-	// even when the caller passes a `signal`; the caller's signal is forwarded
-	// onto the controller, and whichever aborts first wins.
-	const releaseSignal = forwardAbortSignal(controller, opts.signal);
+	const detachSignal = forwardAbortSignal(controller, opts.signal);
 	const signal = controller.signal;
-	// cleared in `finally` too: a rejected fetch (caller abort, network error)
-	// must not leave the timer holding the event loop until the deadline
-	let clearTimeout = () => {};
+	let clearRequestTimeout = () => {};
 	try {
 		const _url = getURL(__url, opts);
 		const headers = await getHeaders(opts);
@@ -83,9 +78,9 @@ export const betterFetch = async <
 			}
 		}
 
-		clearTimeout = getTimeout(opts, controller).clearTimeout;
+		clearRequestTimeout = getTimeout(opts, controller).clearTimeout;
 		let response = await fetch(context.url, context);
-		clearTimeout();
+		clearRequestTimeout();
 
 		const responseContext = {
 			response,
@@ -227,7 +222,7 @@ export const betterFetch = async <
 			},
 		} as any;
 	} finally {
-		clearTimeout();
-		releaseSignal();
+		clearRequestTimeout();
+		detachSignal();
 	}
 };
