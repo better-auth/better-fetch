@@ -648,6 +648,33 @@ describe("plugin", () => {
 		});
 	});
 
+	it("passes modified options to subsequent plugins", async () => {
+		let receivedTimeout: number | undefined;
+		const setTimeoutPlugin = {
+			id: "set-timeout",
+			name: "Set timeout",
+			init(url, options) {
+				return { url, options: { ...options, timeout: 100 } };
+			},
+		} satisfies BetterFetchPlugin;
+		const readTimeoutPlugin = {
+			id: "read-timeout",
+			name: "Read timeout",
+			init(url, options) {
+				receivedTimeout = options?.timeout;
+				return { url, options };
+			},
+		} satisfies BetterFetchPlugin;
+		const fetch = createFetch({
+			plugins: [setTimeoutPlugin, readTimeoutPlugin],
+			customFetchImpl: async () => new Response(),
+		});
+
+		await fetch("https://example.com");
+
+		expect(receivedTimeout).toBe(100);
+	});
+
 	it("should infer additional options", async () => {
 		const $fetch = createFetch({
 			plugins: [
