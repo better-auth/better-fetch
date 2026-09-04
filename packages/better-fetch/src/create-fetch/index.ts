@@ -70,15 +70,11 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 
 					let opts = {
 						...options,
-						...(keySchema.method != null
-							? { method: keySchema.method }
-							: undefined),
-						...(keySchema.output != null
-							? { output: keySchema.output }
-							: undefined),
-						...(validatedHeaders != null
-							? { headers: validatedHeaders }
-							: undefined),
+						...(keySchema.method !== undefined && { method: keySchema.method }),
+						...(keySchema.output !== undefined && { output: keySchema.output }),
+						...(validatedHeaders !== undefined && {
+							headers: validatedHeaders,
+						}),
 					};
 
 					if (!options?.disableValidation) {
