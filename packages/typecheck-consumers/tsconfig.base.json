@@ -4,6 +4,7 @@
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
 		"strict": true,
+		"exactOptionalPropertyTypes": true,
 		"skipLibCheck": false,
 		"types": [],
 		"noEmit": true

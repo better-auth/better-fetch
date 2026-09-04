@@ -669,7 +669,7 @@ describe("plugin", () => {
 			name: "Read timeout",
 			init(url, options) {
 				receivedTimeout = options?.timeout;
-				return { url, options };
+				return { url };
 			},
 		} satisfies BetterFetchPlugin;
 		const fetch = createFetch({
@@ -798,7 +798,7 @@ describe("create-fetch-headers", () => {
 			name: "inspect",
 			async init(url, options) {
 				spread = { ...(options?.headers as Record<string, string>) };
-				return { url, options };
+				return { url, ...(options ? { options } : {}) };
 			},
 		};
 		const $fetch = createFetch({

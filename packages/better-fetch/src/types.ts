@@ -96,7 +96,10 @@ export type BetterFetchOption<
 			params?: Params;
 			/**
 			 * Duplex mode
+			 *
+			 * @see https://fetch.spec.whatwg.org/#enumdef-requestduplex
 			 */
+			// TODO: Remove "full" in the next minor release.
 			duplex?: "full" | "half";
 			/**
 			 * Custom JSON parser
