@@ -58,14 +58,18 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 
 						const validated = (await parseStandardSchema(
 							keySchema.headers,
-							normalizedHeaders,
-						)) as Record<string, string | undefined>;
+							Object.keys(normalizedHeaders).length > 0
+								? normalizedHeaders
+								: undefined,
+						)) as Record<string, string | undefined> | undefined;
 
 						const finalHeaders: Record<string, string | undefined> = {};
-						for (const [key, value] of Object.entries(validated)) {
-							finalHeaders[key.toLowerCase()] = value;
+						if (validated) {
+							for (const [key, value] of Object.entries(validated)) {
+								finalHeaders[key.toLowerCase()] = value;
+							}
 						}
-						validatedHeaders = finalHeaders;
+						validatedHeaders = validated ? finalHeaders : undefined;
 					}
 
 					const opts = {

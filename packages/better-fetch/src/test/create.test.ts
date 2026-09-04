@@ -205,6 +205,28 @@ describe("create-fetch-runtime-test", () => {
 		expect(requestQuery).toEqual({ include: ["recommendations"] });
 	});
 
+	it("applies default headers when options are omitted", async () => {
+		let requestHeader: string | null = null;
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			schema: createSchema({
+				"/users": {
+					headers: z
+						.object({ "x-api-version": z.string() })
+						.default({ "x-api-version": "1" }),
+				},
+			}),
+			customFetchImpl: async () => new Response(),
+			onRequest(context) {
+				requestHeader = context.headers.get("x-api-version");
+			},
+		});
+
+		await fetch("/users");
+
+		expect(requestHeader).toBe("1");
+	});
+
 	it("should validate response and return data if validation passes", async () => {
 		const res = await $fetch("/echo", {
 			output: z.object({
