@@ -744,7 +744,7 @@ describe("create-fetch-headers", () => {
 			name: "inspect",
 			async init(url, options) {
 				spread = { ...(options?.headers as Record<string, string>) };
-				return { url, options };
+				return { url, ...(options ? { options } : {}) };
 			},
 		};
 		const $fetch = createFetch({
