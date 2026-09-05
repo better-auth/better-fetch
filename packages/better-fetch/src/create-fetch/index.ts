@@ -4,6 +4,20 @@ import type { BetterFetchOption } from "../types";
 import { mergeHeaders, parseStandardSchema } from "../utils";
 import type { BetterFetch, CreateFetchOption } from "./types";
 
+type ApplySchemaPluginOptions = {
+	requestHeaders: BetterFetchOption["headers"];
+};
+
+const mergeOptionalHeaders = (
+	baseHeaders: BetterFetchOption["headers"],
+	overrideHeaders: BetterFetchOption["headers"],
+): Record<string, string> | undefined => {
+	if (baseHeaders === undefined && overrideHeaders === undefined) {
+		return undefined;
+	}
+	return mergeHeaders(baseHeaders, overrideHeaders);
+};
+
 const normalizeHeaders = (
 	headers: BetterFetchOption["headers"],
 ): Record<string, string> | undefined => {
@@ -18,7 +32,10 @@ const normalizeHeaders = (
 	return normalizedHeaders;
 };
 
-export const applySchemaPlugin = (config: CreateFetchOption) =>
+const createSchemaPlugin = (
+	config: CreateFetchOption,
+	pluginOptions?: ApplySchemaPluginOptions,
+) =>
 	({
 		id: "apply-schema",
 		name: "Apply Schema",
@@ -55,11 +72,18 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 				if (keySchema) {
 					let validatedHeaders = options?.headers;
 					if (keySchema.headers && !options?.disableValidation) {
+						const requestHeaders =
+							pluginOptions === undefined
+								? options?.headers
+								: pluginOptions.requestHeaders;
 						const validated = (await parseStandardSchema(
 							keySchema.headers,
-							normalizeHeaders(options?.headers),
+							normalizeHeaders(requestHeaders),
 						)) as Record<string, string | undefined> | undefined;
-						validatedHeaders = normalizeHeaders(validated);
+						validatedHeaders = mergeOptionalHeaders(
+							normalizeHeaders(options?.headers),
+							normalizeHeaders(validated),
+						);
 					}
 
 					const opts = {
@@ -100,21 +124,23 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 		},
 	}) satisfies BetterFetchPlugin;
 
+export const applySchemaPlugin = (config: CreateFetchOption) =>
+	createSchemaPlugin(config);
+
 export const createFetch = <Option extends CreateFetchOption>(
 	config?: Option,
 ) => {
 	async function $fetch(url: string, options?: BetterFetchOption) {
-		const headers =
-			config?.headers === undefined && options?.headers === undefined
-				? undefined
-				: mergeHeaders(config?.headers, options?.headers);
+		const headers = mergeOptionalHeaders(config?.headers, options?.headers);
 		const opts = {
 			...config,
 			...options,
 			...(headers !== undefined && { headers }),
 			plugins: [
 				...(config?.plugins || []),
-				applySchemaPlugin(config || {}),
+				createSchemaPlugin(config || {}, {
+					requestHeaders: options?.headers,
+				}),
 				...(options?.plugins || []),
 			],
 		} as BetterFetchOption;

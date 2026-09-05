@@ -227,6 +227,32 @@ describe("create-fetch-runtime-test", () => {
 		expect(requestHeader).toBe("1");
 	});
 
+	it("merges default headers with config headers when request headers are omitted", async () => {
+		let requestHeaders: Headers | undefined;
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			headers: { authorization: "Bearer token" },
+			schema: createSchema({
+				"/users": {
+					headers: z
+						.object({ "x-api-version": z.string() })
+						.default({ "x-api-version": "1" }),
+				},
+			}),
+			customFetchImpl: async () => new Response(),
+			onRequest(context) {
+				requestHeaders = context.headers;
+			},
+		});
+
+		await fetch("/users");
+
+		expect(Object.fromEntries(requestHeaders ?? [])).toEqual({
+			authorization: "Bearer token",
+			"x-api-version": "1",
+		});
+	});
+
 	it.each([
 		{ name: "object", headers: {} },
 		{ name: "Headers instance", headers: new Headers() },
