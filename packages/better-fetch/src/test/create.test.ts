@@ -227,6 +227,29 @@ describe("create-fetch-runtime-test", () => {
 		expect(requestHeader).toBe("1");
 	});
 
+	it.each([
+		{ name: "object", headers: {} },
+		{ name: "Headers instance", headers: new Headers() },
+	])("validates explicitly empty $name headers", async ({ headers }) => {
+		let requestCount = 0;
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			schema: createSchema({
+				"/users": {
+					headers: z.object({}).strict(),
+				},
+			}),
+			customFetchImpl: async () => {
+				requestCount++;
+				return new Response();
+			},
+		});
+
+		await fetch("/users", { headers });
+
+		expect(requestCount).toBe(1);
+	});
+
 	it("should validate response and return data if validation passes", async () => {
 		const res = await $fetch("/echo", {
 			output: z.object({

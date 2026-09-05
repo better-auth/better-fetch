@@ -4,6 +4,20 @@ import type { BetterFetchOption } from "../types";
 import { mergeHeaders, parseStandardSchema } from "../utils";
 import type { BetterFetch, CreateFetchOption } from "./types";
 
+const normalizeHeaders = (
+	headers: BetterFetchOption["headers"],
+): Record<string, string> | undefined => {
+	if (headers === undefined) {
+		return undefined;
+	}
+
+	const normalizedHeaders: Record<string, string> = {};
+	for (const [key, value] of Object.entries(mergeHeaders(headers))) {
+		normalizedHeaders[key.toLowerCase()] = value;
+	}
+	return normalizedHeaders;
+};
+
 export const applySchemaPlugin = (config: CreateFetchOption) =>
 	({
 		id: "apply-schema",
@@ -41,35 +55,11 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 				if (keySchema) {
 					let validatedHeaders = options?.headers;
 					if (keySchema.headers && !options?.disableValidation) {
-						const normalizedHeaders: Record<string, string> = {};
-						if (options?.headers) {
-							if (options.headers instanceof Headers) {
-								options.headers.forEach((value, key) => {
-									normalizedHeaders[key.toLowerCase()] = value;
-								});
-							} else if (typeof options.headers === "object") {
-								for (const [key, value] of Object.entries(options.headers)) {
-									if (value !== null && value !== undefined) {
-										normalizedHeaders[key.toLowerCase()] = value;
-									}
-								}
-							}
-						}
-
 						const validated = (await parseStandardSchema(
 							keySchema.headers,
-							Object.keys(normalizedHeaders).length > 0
-								? normalizedHeaders
-								: undefined,
+							normalizeHeaders(options?.headers),
 						)) as Record<string, string | undefined> | undefined;
-
-						const finalHeaders: Record<string, string | undefined> = {};
-						if (validated) {
-							for (const [key, value] of Object.entries(validated)) {
-								finalHeaders[key.toLowerCase()] = value;
-							}
-						}
-						validatedHeaders = validated ? finalHeaders : undefined;
+						validatedHeaders = normalizeHeaders(validated);
 					}
 
 					const opts = {
@@ -79,9 +69,6 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 						}),
 						...(keySchema.output !== undefined && {
 							output: keySchema.output,
-						}),
-						...(validatedHeaders !== undefined && {
-							headers: validatedHeaders,
 						}),
 						...(!options?.disableValidation && {
 							body: keySchema.input
@@ -95,6 +82,11 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 								: options?.query,
 						}),
 					};
+					if (validatedHeaders === undefined) {
+						delete opts.headers;
+					} else {
+						opts.headers = validatedHeaders;
+					}
 					return {
 						url,
 						options: opts,
@@ -112,10 +104,14 @@ export const createFetch = <Option extends CreateFetchOption>(
 	config?: Option,
 ) => {
 	async function $fetch(url: string, options?: BetterFetchOption) {
+		const headers =
+			config?.headers === undefined && options?.headers === undefined
+				? undefined
+				: mergeHeaders(config?.headers, options?.headers);
 		const opts = {
 			...config,
 			...options,
-			headers: mergeHeaders(config?.headers, options?.headers),
+			...(headers !== undefined && { headers }),
 			plugins: [
 				...(config?.plugins || []),
 				applySchemaPlugin(config || {}),
