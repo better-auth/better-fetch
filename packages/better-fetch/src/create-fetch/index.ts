@@ -10,7 +10,7 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 		name: "Apply Schema",
 		version: "1.0.0",
 		async init(url, options: BetterFetchOption | undefined) {
-			let opts = {
+			let opts: BetterFetchOption = {
 				...options,
 				...(config.query !== undefined && {
 					query: { ...config.query, ...options?.query },
