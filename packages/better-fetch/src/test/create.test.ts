@@ -183,16 +183,101 @@ describe("create-fetch-runtime-test", () => {
 		});
 	});
 
-	it("merges instance query values with schema query values", async () => {
+	it.each([
+		{ name: "object", querySchema: z.object({ id: z.string() }) },
+		{
+			name: "strict object",
+			querySchema: z.object({ id: z.string() }).strict(),
+		},
+	])(
+		"merges instance query values with a $name schema",
+		async ({ querySchema }) => {
+			let requestURL = "";
+			const fetch = createFetch({
+				baseURL: "https://example.com",
+				query: { apiKey: "secret" },
+				schema: createSchema({
+					"/movies": {
+						query: querySchema,
+					},
+				}),
+				customFetchImpl: async (input) => {
+					requestURL = input.toString();
+					return new Response();
+				},
+			});
+
+			await fetch("/movies", { query: { id: "42" } });
+
+			expect(requestURL).toBe("https://example.com/movies?apiKey=secret&id=42");
+		},
+	);
+
+	it.each([
+		{
+			apiKey: "request",
+			expected: "https://example.com/movies?apiKey=request&id=42",
+		},
+		{ apiKey: undefined, expected: "https://example.com/movies?id=42" },
+		{ apiKey: null, expected: "https://example.com/movies?id=42" },
+	])(
+		"preserves an instance query override of $apiKey outside the schema",
+		async ({ apiKey, expected }) => {
+			let requestURL = "";
+			const fetch = createFetch({
+				baseURL: "https://example.com",
+				query: { apiKey: "global" },
+				schema: createSchema({
+					"/movies": { query: z.object({ id: z.string() }) },
+				}),
+				customFetchImpl: async (input) => {
+					requestURL = input.toString();
+					return new Response();
+				},
+			});
+			const query = { apiKey, id: "42", extra: "stripped" };
+
+			await fetch("/movies", { query });
+
+			expect(requestURL).toBe(expected);
+			expect(query).toEqual({ apiKey, id: "42", extra: "stripped" });
+		},
+	);
+
+	it("rejects unknown request keys in a strict query schema", async () => {
+		let requestCount = 0;
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			query: { apiKey: "global" },
+			schema: createSchema({
+				"/movies": { query: z.object({ id: z.string() }).strict() },
+			}),
+			customFetchImpl: async () => {
+				requestCount++;
+				return new Response();
+			},
+		});
+		const query = { id: "42", extra: "invalid" };
+
+		await expect(fetch("/movies", { query })).rejects.toBeInstanceOf(
+			ValidationError,
+		);
+		expect(requestCount).toBe(0);
+	});
+
+	it.each([
+		{ name: "no schema", schema: undefined },
+		{ name: "unmatched route", schema: createSchema({ "/other": {} }) },
+		{
+			name: "route without query validation",
+			schema: createSchema({ "/movies": {} }),
+		},
+	])("merges instance query with $name", async ({ schema }) => {
 		let requestURL = "";
 		const fetch = createFetch({
 			baseURL: "https://example.com",
-			query: { apiKey: "secret" },
-			schema: createSchema({
-				"/movies": {
-					query: z.object({ id: z.string() }),
-				},
-			}),
+			query: { apiKey: "global", id: "default" },
+			...(schema !== undefined && { schema }),
 			customFetchImpl: async (input) => {
 				requestURL = input.toString();
 				return new Response();
@@ -201,7 +286,30 @@ describe("create-fetch-runtime-test", () => {
 
 		await fetch("/movies", { query: { id: "42" } });
 
-		expect(requestURL).toBe("https://example.com/movies?apiKey=secret&id=42");
+		expect(requestURL).toBe("https://example.com/movies?apiKey=global&id=42");
+	});
+
+	it("validates instance query when request query is omitted", async () => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			query: { id: "movie" },
+			schema: createSchema({
+				"/movies": {
+					query: z
+						.object({ id: z.string().transform((id) => id.toUpperCase()) })
+						.optional(),
+				},
+			}),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/movies");
+
+		expect(requestURL).toBe("https://example.com/movies?id=MOVIE");
 	});
 
 	it("skips query validation when disabled and preserves merged values", async () => {
