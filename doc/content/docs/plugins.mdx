@@ -116,7 +116,8 @@ const plugin = {
 } satisfies BetterFetchPlugin;
 
 const $fetch = createFetch({    
-    baseURL: "localhost:3000"
+    baseURL: "localhost:3000",
+    plugins: [plugin],
 })
 
 const { data, error } = await $fetch("https://jsonplaceholder.typicode.com/path", {

@@ -12,6 +12,7 @@ import { z } from "zod";
 import {
 	BetterFetch,
 	type FetchSchemaRoutes,
+	type InferParamPath,
 	createFetch,
 	createSchema,
 	methods,
@@ -182,6 +183,28 @@ describe("create-fetch-runtime-test", () => {
 		});
 	});
 
+	it("applies a default query when options are omitted", async () => {
+		let requestQuery: unknown;
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			schema: createSchema({
+				"/movies": {
+					query: z
+						.object({ include: z.array(z.string()) })
+						.default({ include: ["recommendations"] }),
+				},
+			}),
+			customFetchImpl: async () => new Response(),
+			onRequest(context) {
+				requestQuery = context.query;
+			},
+		});
+
+		await fetch("/movies");
+
+		expect(requestQuery).toEqual({ include: ["recommendations"] });
+	});
+
 	it("should validate response and return data if validation passes", async () => {
 		const res = await $fetch("/echo", {
 			output: z.object({
@@ -217,6 +240,26 @@ describe("create-fetch-runtime-test", () => {
 			const res = await $f(`@${method}/method`);
 			expect(res.data).toEqual({ method: method.toUpperCase() });
 		}
+	});
+
+	it("treats literal colons as path text", async () => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://places.googleapis.com",
+			schema: createSchema({
+				"/v1/places:searchNearby": {},
+			}),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/v1/places:searchNearby");
+
+		expect(requestURL).toBe(
+			"https://places.googleapis.com/v1/places:searchNearby",
+		);
 	});
 
 	it("should apply method", async () => {
@@ -407,6 +450,12 @@ describe("create-fetch-type-test", () => {
 				},
 			}),
 		).toMatchTypeOf<Promise<BetterFetchResponse<unknown>>>();
+	});
+
+	it("infers a leading dynamic path segment", () => {
+		expectTypeOf<InferParamPath<":id/details">>().toEqualTypeOf<{
+			id: string;
+		}>();
 	});
 
 	it("should infer default response and error types", () => {
@@ -628,6 +677,33 @@ describe("plugin", () => {
 		});
 	});
 
+	it("passes modified options to subsequent plugins", async () => {
+		let receivedTimeout: number | undefined;
+		const setTimeoutPlugin = {
+			id: "set-timeout",
+			name: "Set timeout",
+			init(url, options) {
+				return { url, options: { ...options, timeout: 100 } };
+			},
+		} satisfies BetterFetchPlugin;
+		const readTimeoutPlugin = {
+			id: "read-timeout",
+			name: "Read timeout",
+			init(url, options) {
+				receivedTimeout = options?.timeout;
+				return { url };
+			},
+		} satisfies BetterFetchPlugin;
+		const fetch = createFetch({
+			plugins: [setTimeoutPlugin, readTimeoutPlugin],
+			customFetchImpl: async () => new Response(),
+		});
+
+		await fetch("https://example.com");
+
+		expect(receivedTimeout).toBe(100);
+	});
+
 	it("should infer additional options", async () => {
 		const $fetch = createFetch({
 			plugins: [
@@ -744,7 +820,7 @@ describe("create-fetch-headers", () => {
 			name: "inspect",
 			async init(url, options) {
 				spread = { ...(options?.headers as Record<string, string>) };
-				return { url, options };
+				return { url, ...(options ? { options } : {}) };
 			},
 		};
 		const $fetch = createFetch({
