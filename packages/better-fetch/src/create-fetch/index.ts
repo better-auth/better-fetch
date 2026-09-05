@@ -70,9 +70,11 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 
 					let opts = {
 						...options,
-						method: keySchema.method,
-						output: keySchema.output,
-						headers: validatedHeaders,
+						...(keySchema.method !== undefined && { method: keySchema.method }),
+						...(keySchema.output !== undefined && { output: keySchema.output }),
+						...(validatedHeaders !== undefined && {
+							headers: validatedHeaders,
+						}),
 					};
 
 					if (!options?.disableValidation) {
@@ -104,7 +106,7 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 			}
 			return {
 				url,
-				options,
+				...(options !== undefined && { options }),
 			};
 		},
 	}) satisfies BetterFetchPlugin;
