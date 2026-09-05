@@ -11,6 +11,12 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 		name: "Apply Schema",
 		version: "1.0.0",
 		async init(url, options: BetterFetchOption | undefined) {
+			let opts: BetterFetchOption = {
+				...options,
+				...(config.query !== undefined && {
+					query: { ...config.query, ...options?.query },
+				}),
+			};
 			const schema =
 				config.plugins?.find((plugin) =>
 					plugin.schema?.config
@@ -79,14 +85,36 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 						validatedHeaders = finalHeaders;
 					}
 
-					let opts = {
-						...options,
-						method: keySchema.method ?? schemaMethod,
-						output: keySchema.output,
-						headers: validatedHeaders,
+					const method = keySchema.method ?? schemaMethod;
+					opts = {
+						...opts,
+						...(method !== undefined && { method }),
+						...(keySchema.output !== undefined && { output: keySchema.output }),
+						...(validatedHeaders !== undefined && {
+							headers: validatedHeaders,
+						}),
 					};
 
 					if (!options?.disableValidation) {
+						if (keySchema.query) {
+							opts.query = await parseStandardSchema(
+								keySchema.query,
+								options?.query,
+							);
+							if (opts.query !== null && typeof opts.query === "object") {
+								const defaults = { ...config.query };
+								for (const key of Object.keys(defaults)) {
+									if (
+										options?.query &&
+										Object.prototype.hasOwnProperty.call(options.query, key)
+									) {
+										defaults[key] = options.query[key];
+									}
+								}
+								opts.query = { ...defaults, ...opts.query };
+							}
+						}
+
 						opts = {
 							...opts,
 							body: keySchema.input
@@ -95,9 +123,6 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 							params: keySchema.params
 								? await parseStandardSchema(keySchema.params, options?.params)
 								: options?.params,
-							query: keySchema.query
-								? await parseStandardSchema(keySchema.query, options?.query)
-								: options?.query,
 						};
 					}
 					return {
@@ -108,7 +133,9 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 			}
 			return {
 				url,
-				options,
+				...((options !== undefined || config.query !== undefined) && {
+					options: opts,
+				}),
 			};
 		},
 	}) satisfies BetterFetchPlugin;

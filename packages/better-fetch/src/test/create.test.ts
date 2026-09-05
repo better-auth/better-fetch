@@ -12,6 +12,7 @@ import { z } from "zod";
 import {
 	BetterFetch,
 	type FetchSchemaRoutes,
+	type InferParamPath,
 	createFetch,
 	createSchema,
 	methods,
@@ -182,6 +183,241 @@ describe("create-fetch-runtime-test", () => {
 		});
 	});
 
+	it.each([
+		{ name: "object", querySchema: z.object({ id: z.string() }) },
+		{
+			name: "strict object",
+			querySchema: z.object({ id: z.string() }).strict(),
+		},
+	])(
+		"merges instance query values with a $name schema",
+		async ({ querySchema }) => {
+			let requestURL = "";
+			const fetch = createFetch({
+				baseURL: "https://example.com",
+				query: { apiKey: "secret" },
+				schema: createSchema({
+					"/movies": {
+						query: querySchema,
+					},
+				}),
+				customFetchImpl: async (input) => {
+					requestURL = input.toString();
+					return new Response();
+				},
+			});
+
+			await fetch("/movies", { query: { id: "42" } });
+
+			expect(requestURL).toBe("https://example.com/movies?apiKey=secret&id=42");
+		},
+	);
+
+	it.each([
+		{
+			apiKey: "request",
+			expected: "https://example.com/movies?apiKey=request&id=42",
+		},
+		{ apiKey: undefined, expected: "https://example.com/movies?id=42" },
+		{ apiKey: null, expected: "https://example.com/movies?id=42" },
+	])(
+		"preserves an instance query override of $apiKey outside the schema",
+		async ({ apiKey, expected }) => {
+			let requestURL = "";
+			const fetch = createFetch({
+				baseURL: "https://example.com",
+				query: { apiKey: "global" },
+				schema: createSchema({
+					"/movies": { query: z.object({ id: z.string() }) },
+				}),
+				customFetchImpl: async (input) => {
+					requestURL = input.toString();
+					return new Response();
+				},
+			});
+			const query = { apiKey, id: "42", extra: "stripped" };
+
+			await fetch("/movies", { query });
+
+			expect(requestURL).toBe(expected);
+			expect(query).toEqual({ apiKey, id: "42", extra: "stripped" });
+		},
+	);
+
+	it("rejects unknown request keys in a strict query schema", async () => {
+		let requestCount = 0;
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			query: { apiKey: "global" },
+			schema: createSchema({
+				"/movies": { query: z.object({ id: z.string() }).strict() },
+			}),
+			customFetchImpl: async () => {
+				requestCount++;
+				return new Response();
+			},
+		});
+		const query = { id: "42", extra: "invalid" };
+
+		await expect(fetch("/movies", { query })).rejects.toBeInstanceOf(
+			ValidationError,
+		);
+		expect(requestCount).toBe(0);
+	});
+
+	it.each([
+		{ name: "no schema", schema: undefined },
+		{ name: "unmatched route", schema: createSchema({ "/other": {} }) },
+		{
+			name: "route without query validation",
+			schema: createSchema({ "/movies": {} }),
+		},
+	])("merges instance query with $name", async ({ schema }) => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			query: { apiKey: "global", id: "default" },
+			...(schema !== undefined && { schema }),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/movies", { query: { id: "42" } });
+
+		expect(requestURL).toBe("https://example.com/movies?apiKey=global&id=42");
+	});
+
+	it("validates instance query when request query is omitted", async () => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			query: { id: "movie" },
+			schema: createSchema({
+				"/movies": {
+					query: z
+						.object({ id: z.string().transform((id) => id.toUpperCase()) })
+						.optional(),
+				},
+			}),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/movies");
+
+		expect(requestURL).toBe("https://example.com/movies?id=MOVIE");
+	});
+
+	it("skips query validation when disabled and preserves merged values", async () => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			query: { apiKey: "secret", id: "default" },
+			schema: createSchema({
+				"/movies": {
+					query: z.object({ id: z.string().regex(/^valid-/) }),
+				},
+			}),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/movies", { query: { id: "42" }, disableValidation: true });
+
+		expect(requestURL).toBe("https://example.com/movies?apiKey=secret&id=42");
+	});
+
+	it("uses validated query values over instance defaults", async () => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			query: { apiKey: "secret", id: "default" },
+			schema: createSchema({
+				"/movies": {
+					query: z.object({
+						id: z.string().transform((id) => id.toUpperCase()),
+					}),
+				},
+			}),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/movies", { query: { id: "movie" } });
+
+		expect(requestURL).toBe(
+			"https://example.com/movies?apiKey=secret&id=MOVIE",
+		);
+	});
+
+	it.each([
+		{ name: "undefined", output: undefined, expected: undefined },
+		{ name: "null", output: null, expected: null },
+		{ name: "string", output: "movie", expected: "movie" },
+		{
+			name: "array",
+			output: ["movie"],
+			expected: { apiKey: "secret", 0: "movie" },
+		},
+		{
+			name: "object",
+			output: { id: "42" },
+			expected: { apiKey: "secret", id: "42" },
+		},
+	])(
+		"preserves existing behavior for $name query outputs",
+		async ({ output, expected }) => {
+			let requestQuery: unknown;
+			const fetch = createFetch({
+				baseURL: "https://example.com",
+				query: { apiKey: "secret" },
+				schema: createSchema({
+					"/movies": {
+						query: z.object({ id: z.string() }).transform(() => output),
+					},
+				}),
+				customFetchImpl: async () => new Response(),
+				onRequest(context) {
+					requestQuery = context.query;
+				},
+			});
+
+			await fetch("/movies", { query: { id: "42" } });
+
+			expect(requestQuery).toEqual(expected);
+		},
+	);
+
+	it("applies a default query when options are omitted", async () => {
+		let requestQuery: unknown;
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			schema: createSchema({
+				"/movies": {
+					query: z
+						.object({ include: z.array(z.string()) })
+						.default({ include: ["recommendations"] }),
+				},
+			}),
+			customFetchImpl: async () => new Response(),
+			onRequest(context) {
+				requestQuery = context.query;
+			},
+		});
+
+		await fetch("/movies");
+
+		expect(requestQuery).toEqual({ include: ["recommendations"] });
+	});
+
 	it("should validate response and return data if validation passes", async () => {
 		const res = await $fetch("/echo", {
 			output: z.object({
@@ -217,6 +453,26 @@ describe("create-fetch-runtime-test", () => {
 			const res = await $f(`@${method}/method`);
 			expect(res.data).toEqual({ method: method.toUpperCase() });
 		}
+	});
+
+	it("treats literal colons as path text", async () => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://places.googleapis.com",
+			schema: createSchema({
+				"/v1/places:searchNearby": {},
+			}),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/v1/places:searchNearby");
+
+		expect(requestURL).toBe(
+			"https://places.googleapis.com/v1/places:searchNearby",
+		);
 	});
 
 	it("should apply method", async () => {
@@ -432,6 +688,12 @@ describe("create-fetch-type-test", () => {
 				},
 			}),
 		).toMatchTypeOf<Promise<BetterFetchResponse<unknown>>>();
+	});
+
+	it("infers a leading dynamic path segment", () => {
+		expectTypeOf<InferParamPath<":id/details">>().toEqualTypeOf<{
+			id: string;
+		}>();
 	});
 
 	it("should infer default response and error types", () => {
@@ -653,6 +915,33 @@ describe("plugin", () => {
 		});
 	});
 
+	it("passes modified options to subsequent plugins", async () => {
+		let receivedTimeout: number | undefined;
+		const setTimeoutPlugin = {
+			id: "set-timeout",
+			name: "Set timeout",
+			init(url, options) {
+				return { url, options: { ...options, timeout: 100 } };
+			},
+		} satisfies BetterFetchPlugin;
+		const readTimeoutPlugin = {
+			id: "read-timeout",
+			name: "Read timeout",
+			init(url, options) {
+				receivedTimeout = options?.timeout;
+				return { url };
+			},
+		} satisfies BetterFetchPlugin;
+		const fetch = createFetch({
+			plugins: [setTimeoutPlugin, readTimeoutPlugin],
+			customFetchImpl: async () => new Response(),
+		});
+
+		await fetch("https://example.com");
+
+		expect(receivedTimeout).toBe(100);
+	});
+
 	it("should infer additional options", async () => {
 		const $fetch = createFetch({
 			plugins: [
@@ -769,7 +1058,7 @@ describe("create-fetch-headers", () => {
 			name: "inspect",
 			async init(url, options) {
 				spread = { ...(options?.headers as Record<string, string>) };
-				return { url, options };
+				return { url, ...(options ? { options } : {}) };
 			},
 		};
 		const $fetch = createFetch({
