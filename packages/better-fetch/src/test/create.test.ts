@@ -203,6 +203,90 @@ describe("create-fetch-runtime-test", () => {
 		expect(requestURL).toBe("https://example.com/movies?apiKey=secret&id=42");
 	});
 
+	it("skips query validation when disabled and preserves merged values", async () => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			query: { apiKey: "secret", id: "default" },
+			schema: createSchema({
+				"/movies": {
+					query: z.object({ id: z.string().regex(/^valid-/) }),
+				},
+			}),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/movies", { query: { id: "42" }, disableValidation: true });
+
+		expect(requestURL).toBe("https://example.com/movies?apiKey=secret&id=42");
+	});
+
+	it("uses validated query values over instance defaults", async () => {
+		let requestURL = "";
+		const fetch = createFetch({
+			baseURL: "https://example.com",
+			query: { apiKey: "secret", id: "default" },
+			schema: createSchema({
+				"/movies": {
+					query: z.object({
+						id: z.string().transform((id) => id.toUpperCase()),
+					}),
+				},
+			}),
+			customFetchImpl: async (input) => {
+				requestURL = input.toString();
+				return new Response();
+			},
+		});
+
+		await fetch("/movies", { query: { id: "movie" } });
+
+		expect(requestURL).toBe(
+			"https://example.com/movies?apiKey=secret&id=MOVIE",
+		);
+	});
+
+	it.each([
+		{ name: "undefined", output: undefined, expected: undefined },
+		{ name: "null", output: null, expected: null },
+		{ name: "string", output: "movie", expected: "movie" },
+		{
+			name: "array",
+			output: ["movie"],
+			expected: { apiKey: "secret", 0: "movie" },
+		},
+		{
+			name: "object",
+			output: { id: "42" },
+			expected: { apiKey: "secret", id: "42" },
+		},
+	])(
+		"preserves existing behavior for $name query outputs",
+		async ({ output, expected }) => {
+			let requestQuery: unknown;
+			const fetch = createFetch({
+				baseURL: "https://example.com",
+				query: { apiKey: "secret" },
+				schema: createSchema({
+					"/movies": {
+						query: z.object({ id: z.string() }).transform(() => output),
+					},
+				}),
+				customFetchImpl: async () => new Response(),
+				onRequest(context) {
+					requestQuery = context.query;
+				},
+			});
+
+			await fetch("/movies", { query: { id: "42" } });
+
+			expect(requestQuery).toEqual(expected);
+		},
+	);
+
 	it("should validate response and return data if validation passes", async () => {
 		const res = await $fetch("/echo", {
 			output: z.object({

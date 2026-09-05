@@ -68,18 +68,6 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 						validatedHeaders = finalHeaders;
 					}
 
-					let query = options?.query;
-					if (keySchema.query) {
-						const parsedQuery = await parseStandardSchema(
-							keySchema.query,
-							options?.query,
-						);
-						query =
-							parsedQuery && typeof parsedQuery === "object"
-								? { ...config.query, ...parsedQuery }
-								: parsedQuery;
-					}
-
 					let opts = {
 						...options,
 						method: keySchema.method,
@@ -88,6 +76,16 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 					};
 
 					if (!options?.disableValidation) {
+						if (keySchema.query) {
+							opts.query = await parseStandardSchema(
+								keySchema.query,
+								options?.query,
+							);
+							if (opts.query !== null && typeof opts.query === "object") {
+								opts.query = { ...config.query, ...opts.query };
+							}
+						}
+
 						opts = {
 							...opts,
 							body: keySchema.input
@@ -96,7 +94,6 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 							params: keySchema.params
 								? await parseStandardSchema(keySchema.params, options?.params)
 								: options?.params,
-							query,
 						};
 					}
 					return {
@@ -120,9 +117,9 @@ export const createFetch = <Option extends CreateFetchOption>(
 			...config,
 			...options,
 			headers: mergeHeaders(config?.headers, options?.headers),
-			...(config?.query || options?.query
-				? { query: { ...config?.query, ...options?.query } }
-				: {}),
+			...((config?.query !== undefined || options?.query !== undefined) && {
+				query: { ...config?.query, ...options?.query },
+			}),
 			plugins: [
 				...(config?.plugins || []),
 				applySchemaPlugin(config || {}),
