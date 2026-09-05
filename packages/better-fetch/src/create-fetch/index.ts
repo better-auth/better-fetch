@@ -1,8 +1,8 @@
 import { betterFetch } from "../fetch";
+import { parseMethodModifier } from "../method";
 import { BetterFetchPlugin } from "../plugins";
 import type { BetterFetchOption } from "../types";
 import { mergeHeaders, parseStandardSchema } from "../utils";
-import { methods } from "./schema";
 import type { BetterFetch, CreateFetchOption } from "./types";
 
 export const applySchemaPlugin = (config: CreateFetchOption) =>
@@ -44,17 +44,11 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 					urlKey = urlKey.substring(1);
 				}
 
-				const methodModifier = urlKey.startsWith("@")
-					? urlKey.slice(1).split("/")[0]
-					: undefined;
-				const schemaMethod =
-					methodModifier && methods.includes(methodModifier)
-						? methodModifier
-						: undefined;
 				const keySchema = schema.schema[urlKey];
 				if (keySchema) {
+					const { method: schemaMethod, path } = parseMethodModifier(urlKey);
 					if (schemaMethod) {
-						url = url.replace(`@${schemaMethod}/`, "");
+						url = url.slice(0, url.length - urlKey.length) + path;
 					}
 					let validatedHeaders = options?.headers;
 					if (keySchema.headers && !options?.disableValidation) {

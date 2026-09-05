@@ -1,5 +1,5 @@
 import { getAuthHeader } from "./auth";
-import { methods } from "./create-fetch";
+import { parseMethodModifier } from "./method";
 import type { StandardSchemaV1 } from "./standard-schema";
 import type { BetterFetchOption, FetchEsque } from "./types";
 
@@ -146,11 +146,9 @@ export async function getHeaders(opts?: BetterFetchOption) {
 }
 
 export function getURL(url: string, options?: BetterFetchOption) {
-	if (url.startsWith("@")) {
-		const m = url.toString().split("@")[1].split("/")[0];
-		if (methods.includes(m)) {
-			url = url.replace(`@${m}/`, "/");
-		}
+	const { path } = parseMethodModifier(url);
+	if (path !== url) {
+		url = `/${path}`;
 	}
 	let _url: string | URL;
 	try {
@@ -249,12 +247,9 @@ export function getMethod(url: string, options?: BetterFetchOption) {
 	if (options?.method) {
 		return options.method.toUpperCase();
 	}
-	if (url.startsWith("@")) {
-		const pMethod = url.split("@")[1]?.split("/")[0];
-		if (!methods.includes(pMethod)) {
-			return options?.body ? "POST" : "GET";
-		}
-		return pMethod.toUpperCase();
+	const { method } = parseMethodModifier(url);
+	if (method) {
+		return method.toUpperCase();
 	}
 	return options?.body ? "POST" : "GET";
 }

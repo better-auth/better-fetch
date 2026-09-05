@@ -510,28 +510,52 @@ describe("create-fetch-runtime-test", () => {
 		});
 	});
 
-	it("applies a method modifier after a schema prefix", async () => {
+	it.each(["/api/v1/", "/api/@put/"])(
+		"applies a method modifier after prefix %s",
+		async (prefix) => {
+			let request: { method: string; url: string } | undefined;
+			const fetch = createFetch({
+				baseURL: "https://example.com",
+				schema: createSchema(
+					{ "@put/me/profile": {} },
+					{ prefix, strict: true },
+				),
+				customFetchImpl: async (input, init) => {
+					request = {
+						method: init?.method ?? "",
+						url: input.toString(),
+					};
+					return new Response();
+				},
+			});
+
+			await fetch(`${prefix}@put/me/profile`);
+
+			expect(request).toEqual({
+				method: "PUT",
+				url: `https://example.com${prefix.replace(/@/g, "%40")}me/profile`,
+			});
+		},
+	);
+
+	it("preserves schema method precedence when a prefix maps to a base URL", async () => {
 		let request: { method: string; url: string } | undefined;
 		const fetch = createFetch({
-			baseURL: "https://example.com",
 			schema: createSchema(
-				{ "@put/me/profile": {} },
-				{ prefix: "/api/v1/", strict: true },
+				{ "@put/me/profile": { method: "patch" } },
+				{ prefix: "/api/", baseURL: "https://example.com/v1/", strict: true },
 			),
 			customFetchImpl: async (input, init) => {
-				request = {
-					method: init?.method ?? "",
-					url: input.toString(),
-				};
+				request = { method: init?.method ?? "", url: input.toString() };
 				return new Response();
 			},
 		});
 
-		await fetch("/api/v1/@put/me/profile");
+		await fetch("/api/@put/me/profile", { method: "post" });
 
 		expect(request).toEqual({
-			method: "PUT",
-			url: "https://example.com/api/v1/me/profile",
+			method: "PATCH",
+			url: "https://example.com/v1/me/profile",
 		});
 	});
 
