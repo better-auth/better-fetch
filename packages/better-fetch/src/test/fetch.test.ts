@@ -327,6 +327,24 @@ describe("hooks", () => {
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
 
+	it("passes a readable cloned response to onError", async () => {
+		let errorResponseText = "";
+		const fetch = createFetch({
+			customFetchImpl: async () =>
+				new Response(JSON.stringify({ message: "Server Error" }), {
+					status: 500,
+				}),
+			async onError({ response }) {
+				errorResponseText = await response.text();
+			},
+			hookOptions: { cloneResponse: true },
+		});
+
+		await fetch("https://example.com");
+
+		expect(errorResponseText).toBe('{"message":"Server Error"}');
+	});
+
 	it("works with a relative url and a custom fetch impl", async () => {
 		const onRequest = vi.fn();
 		const onResponse = vi.fn();
