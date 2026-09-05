@@ -1,4 +1,5 @@
 import { betterFetch } from "../fetch";
+import { parseMethodModifier } from "../method";
 import { BetterFetchPlugin } from "../plugins";
 import type { BetterFetchOption } from "../types";
 import { mergeHeaders, parseStandardSchema } from "../utils";
@@ -45,6 +46,10 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 
 				const keySchema = schema.schema[urlKey];
 				if (keySchema) {
+					const { method: schemaMethod, path } = parseMethodModifier(urlKey);
+					if (schemaMethod) {
+						url = url.slice(0, url.length - urlKey.length) + path;
+					}
 					let validatedHeaders = options?.headers;
 					if (keySchema.headers && !options?.disableValidation) {
 						const normalizedHeaders: Record<string, string> = {};
@@ -74,9 +79,10 @@ export const applySchemaPlugin = (config: CreateFetchOption) =>
 						validatedHeaders = finalHeaders;
 					}
 
+					const method = keySchema.method ?? schemaMethod;
 					opts = {
 						...opts,
-						...(keySchema.method !== undefined && { method: keySchema.method }),
+						...(method !== undefined && { method }),
 						...(keySchema.output !== undefined && { output: keySchema.output }),
 						...(validatedHeaders !== undefined && {
 							headers: validatedHeaders,
