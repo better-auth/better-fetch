@@ -269,8 +269,8 @@ export function getTimeout(
 	clearTimeout: () => void;
 } {
 	let abortTimeout: TimeoutHandle | undefined;
-	if (!options?.signal && options?.timeout) {
-		abortTimeout = setTimeout(() => controller?.abort(), options?.timeout);
+	if (options?.timeout) {
+		abortTimeout = setTimeout(() => controller?.abort(), options.timeout);
 	}
 	return {
 		abortTimeout,
@@ -279,6 +279,26 @@ export function getTimeout(
 				clearTimeout(abortTimeout);
 			}
 		},
+	};
+}
+
+export function forwardAbortSignal(
+	controller: AbortController,
+	signal?: AbortSignal | null,
+): () => void {
+	if (!signal) {
+		return () => {};
+	}
+	if (signal.aborted) {
+		controller.abort(signal.reason);
+		return () => {};
+	}
+	const onAbort = () => {
+		controller.abort(signal.reason);
+	};
+	signal.addEventListener("abort", onAbort, { once: true });
+	return () => {
+		signal.removeEventListener("abort", onAbort);
 	};
 }
 
