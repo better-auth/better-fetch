@@ -1,6 +1,6 @@
 # Better Fetch Documentation
 
-A documentation site for [better-fetch](https://github.com/bekacru/better-fetch).
+A documentation site for [better-fetch](https://github.com/better-auth/better-fetch).
 
 ## Development
 

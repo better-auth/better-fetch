@@ -22,7 +22,7 @@ export const docsOptions: DocsLayoutProps = {
 	sidebar: {
 		collapsible: false,
 		footer: (
-			<Link href="https://github.com/bekacru/better-fetch" target="_blank">
+			<Link href="https://github.com/better-auth/better-fetch" target="_blank">
 				<GitHubLogoIcon width={16} height={16} />
 			</Link>
 		),
