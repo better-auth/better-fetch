@@ -1,4 +1,4 @@
-import { methods } from "./create-fetch";
+import { parseMethodModifier } from "./method";
 import type { BetterFetchOption } from "./types";
 
 const isReservedPathSegment = (value: string) =>
@@ -34,14 +34,9 @@ export function getURL(url: string, option?: BetterFetchOption) {
 		? url.split("/").slice(0, 3).join("/")
 		: baseURL || "";
 
-	/**
-	 * Remove method modifiers
-	 */
-	if (url.startsWith("@")) {
-		const m = url.toString().split("@")[1].split("/")[0];
-		if (methods.includes(m)) {
-			url = url.replace(`@${m}/`, "/");
-		}
+	const { path: requestPath } = parseMethodModifier(url);
+	if (requestPath !== url) {
+		url = `/${requestPath}`;
 	}
 
 	if (!basePath.endsWith("/")) basePath += "/";

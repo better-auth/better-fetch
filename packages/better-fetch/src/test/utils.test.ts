@@ -1,5 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { getBody } from "../utils";
+import { getURL } from "../url";
+import { getBody, getURL as getLegacyURL, getMethod } from "../utils";
+
+describe("method modifiers", () => {
+	it.each(["get", "post", "put", "patch", "delete"])(
+		"resolves @%s consistently for method and URL",
+		(method) => {
+			const path = `@${method}/users`;
+			const options = { baseURL: "https://example.com" };
+			expect(getMethod(path)).toBe(method.toUpperCase());
+			expect(getURL(path, options).toString()).toBe(
+				"https://example.com/users",
+			);
+			expect(getLegacyURL(path, options).toString()).toBe(
+				"https://example.com/users",
+			);
+		},
+	);
+
+	it("prefers an explicit method over the modifier", () => {
+		expect(getMethod("@put/users", { method: "patch" })).toBe("PATCH");
+	});
+
+	it.each(["@unknown/users", "/users/@put/profile", "@PUT/users"])(
+		"preserves an unrecognized modifier in %s",
+		(path) => {
+			expect(getMethod(path)).toBe("GET");
+			expect(getMethod(path, { body: { id: "1" } })).toBe("POST");
+			expect(getURL(path, { baseURL: "https://example.com" }).toString()).toBe(
+				`https://example.com/${path.replace(/^\//, "").replace(/@/g, "%40")}`,
+			);
+		},
+	);
+
+	it("preserves a bare modifier's existing method and path behavior", () => {
+		expect(getMethod("@put")).toBe("PUT");
+		expect(getURL("@put", { baseURL: "https://example.com" }).toString()).toBe(
+			"https://example.com/%40put",
+		);
+	});
+});
 
 describe("getBody", () => {
 	it("returns null when there is no body", () => {
