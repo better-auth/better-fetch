@@ -141,41 +141,38 @@ export const logger = (options?: LoggerOptions) => {
 			async onError(context) {
 				if (!enabled) return;
 				const log = opts.console.fail || opts.console.error;
+				const response = context.response;
+				const status = response?.status ?? context.error.status;
+				const statusText =
+					response?.statusText ||
+					context.error.statusText ||
+					getStatusText(status);
 				if (isLegacy) {
 					let obj: any;
 					try {
-						if (opts.verbose) {
-							const res = context.response.clone();
+						if (opts.verbose && response) {
+							const res = response.clone();
 							const json = await res.json();
 							if (json) {
 								obj = json;
 							}
 						}
 					} catch (e) {}
-					log(
-						"Request failed with status: ",
-						context.response.status,
-						`(${
-							context.response.statusText ||
-							getStatusText(context.response.status)
-						})`,
-					);
+					log("Request failed with status: ", status, `(${statusText})`);
 					opts.verbose && obj && opts.console.error(obj);
 					return;
 				}
 				const duration = formatDuration(startTimes.get(context.request));
-				const status = context.response.status;
-				const statusText = context.response.statusText || getStatusText(status);
 				log(
 					`${formatPrefix(
 						context.request.method,
 						context.request.url,
 					)} — ${status} ${statusText}${duration}`,
 				);
-				if (opts.verbose) {
+				if (opts.verbose && response) {
 					let obj: any;
 					try {
-						const res = context.response.clone();
+						const res = response.clone();
 						const json = await res.json();
 						if (json) {
 							obj = json;

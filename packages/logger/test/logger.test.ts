@@ -116,6 +116,16 @@ describe("logger - default format", () => {
 		expect(msg).toContain("500");
 	});
 
+	it("logs network errors without a response", async () => {
+		const { cons, $fetch } = setup({}, async () => {
+			throw new TypeError("fetch failed");
+		});
+
+		await $fetch("/users");
+
+		expect(messageOf(cons.fail)).toContain("0 Network Error");
+	});
+
 	it("produces one distinguishable log per parallel request", async () => {
 		const slowFast: FetchEsque = async (input) => {
 			if (input.toString().includes("/slow")) {
