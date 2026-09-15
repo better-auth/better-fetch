@@ -200,6 +200,39 @@ describe("fetch", () => {
 		expect(delays[2]).toBeGreaterThanOrEqual(400);
 	});
 
+	it("retries successful responses selected by shouldRetry", async () => {
+		let requests = 0;
+		const fetch = createFetch({
+			customFetchImpl: async () => {
+				requests++;
+				return new Response(
+					JSON.stringify(
+						requests === 1
+							? { errors: [{ message: "try again" }] }
+							: { data: { ready: true } },
+					),
+				);
+			},
+			retry: {
+				type: "linear",
+				attempts: 1,
+				delay: 0,
+				async shouldRetry(response) {
+					if (!response) return false;
+					const body = (await response.json()) as {
+						errors?: Array<{ message: string }>;
+					};
+					return Boolean(body.errors?.length);
+				},
+			},
+		});
+
+		const result = await fetch("https://example.com");
+
+		expect(requests).toBe(2);
+		expect(result).toEqual({ data: { data: { ready: true } }, error: null });
+	});
+
 	it("rejects when an already-aborted signal is passed", async () => {
 		const controller = new AbortController();
 		controller.abort();
