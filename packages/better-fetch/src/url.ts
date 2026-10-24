@@ -1,6 +1,44 @@
 import { parseMethodModifier } from "./method";
 import type { BetterFetchOption } from "./types";
 
+/**
+ * Matches the scheme, `//` and host at the start of a URL that names its own
+ * host, such as `https://example.com` in `https://example.com/users`.
+ *
+ * @see https://www.rfc-editor.org/rfc/rfc3986#section-3
+ */
+const ORIGIN_RE = /^[a-z][a-z\d+.-]*:\/\/[^/?#]+/i;
+
+/**
+ * Matches the slashes at the start of a path, such as `///` in `///users`.
+ */
+const LEADING_SLASHES_RE = /^\/+/;
+
+/**
+ * Removes every slash at the end, so `"a//"` becomes `"a"`. A loop rather than
+ * a regex, as a pattern anchored at the end backtracks over a long run of
+ * slashes.
+ */
+function withoutTrailingSlashes(value: string) {
+	let end = value.length;
+	while (end > 0 && value[end - 1] === "/") {
+		end--;
+	}
+	return value.slice(0, end);
+}
+
+/**
+ * Splits at the first occurrence of the separator, so a separator inside the
+ * remainder is kept. `"a?b?c"` splits into `"a"` and `"b?c"`.
+ */
+function splitOnce(value: string, separator: string) {
+	const index = value.indexOf(separator);
+	if (index === -1) {
+		return [value, undefined] as const;
+	}
+	return [value.slice(0, index), value.slice(index + 1)] as const;
+}
+
 const isReservedPathSegment = (value: string) =>
 	value === "." || value === "..";
 
@@ -39,6 +77,17 @@ function getPathParams(path: string, params: BetterFetchOption["params"]) {
 	return pathParams;
 }
 
+/**
+ * Replaces `:name` segments with their encoded params.
+ */
+function fillPath(path: string, params: BetterFetchOption["params"]) {
+	const pathParams = getPathParams(path, params);
+	return path
+		.split("/")
+		.map((segment) => resolvePathSegment(segment, pathParams))
+		.join("/");
+}
+
 function serializeQuery(
 	urlQuery: string | undefined,
 	query: BetterFetchOption["query"],
@@ -65,6 +114,33 @@ function serializeQuery(
 		: "";
 }
 
+function withoutBase(input: string, baseURL: string | undefined) {
+	if (!baseURL) {
+		return input;
+	}
+	const basePath = `${withoutTrailingSlashes(baseURL)}/`;
+	return input.startsWith(basePath) ? input.slice(basePath.length) : input;
+}
+
+/**
+ * Appends a path and query to a base as strings, with exactly one slash at the
+ * boundary. The path never decides the scheme or host. The base's own query
+ * comes first, and its fragment is dropped as it belongs to the base document.
+ */
+function joinURL(
+	base: string,
+	path: string,
+	urlQuery: string | undefined,
+	query: BetterFetchOption["query"],
+) {
+	const [baseWithoutHash] = splitOnce(base, "#");
+	const [basePath, baseQuery = ""] = splitOnce(baseWithoutHash, "?");
+	const relativePath = path.replace(LEADING_SLASHES_RE, "");
+	const search = serializeQuery(`${baseQuery}&${urlQuery ?? ""}`, query);
+	const href = `${withoutTrailingSlashes(basePath)}/${relativePath}${search}`;
+	return ORIGIN_RE.test(href) ? new URL(href) : href;
+}
+
 /**
  * Normalize URL
  */
@@ -74,28 +150,16 @@ export function getURL(url: string, option?: BetterFetchOption) {
 		params: {},
 		baseURL: "",
 	};
-	let basePath = url.startsWith("http")
-		? url.split("/").slice(0, 3).join("/")
-		: baseURL || "";
-
 	const { path: requestPath } = parseMethodModifier(url);
-	if (requestPath !== url) {
-		url = `/${requestPath}`;
-	}
+	const input = requestPath === url ? url : `/${requestPath}`;
 
-	if (!basePath.endsWith("/")) basePath += "/";
-	let [path, urlQuery] = url.replace(basePath, "").split("?");
-	const pathParams = getPathParams(path, params);
-
-	path = path
-		.split("/")
-		.map((segment) => resolvePathSegment(segment, pathParams))
-		.join("/");
-	path = path.replace(/^\/+/, "");
-	const queryParamString = serializeQuery(urlQuery, query);
-	if (!basePath.startsWith("http")) {
-		return `${basePath}${path}${queryParamString}`;
-	}
-	const _url = new URL(`${path}${queryParamString}`, basePath);
-	return _url;
+	// A URL that names its own host keeps it. Anything else is a path under
+	// baseURL.
+	const origin = input.match(ORIGIN_RE)?.[0];
+	const relative = origin
+		? input.slice(origin.length)
+		: withoutBase(input, baseURL);
+	const [path, urlQuery] = splitOnce(relative, "?");
+	const filledPath = fillPath(path, params);
+	return joinURL(origin ?? baseURL ?? "", filledPath, urlQuery, query);
 }
