@@ -21,6 +21,50 @@ function resolvePathSegment(segment: string, pathParams: Map<string, string>) {
 	return encodeURIComponent(pathParam);
 }
 
+function getPathParams(path: string, params: BetterFetchOption["params"]) {
+	const pathParams = new Map<string, string>();
+	if (params) {
+		if (Array.isArray(params)) {
+			const paramPaths = path.split("/").filter((p) => p.startsWith(":"));
+			for (const [index, key] of paramPaths.entries()) {
+				const value = params[index];
+				pathParams.set(key, String(value));
+			}
+		} else {
+			for (const [key, value] of Object.entries(params)) {
+				pathParams.set(`:${key}`, String(value));
+			}
+		}
+	}
+	return pathParams;
+}
+
+function serializeQuery(
+	urlQuery: string | undefined,
+	query: BetterFetchOption["query"],
+) {
+	const queryParams = new URLSearchParams(urlQuery);
+	for (const [key, value] of Object.entries(query || {})) {
+		if (value == null) continue;
+		let serializedValue;
+		if (typeof value === "string") {
+			serializedValue = value;
+		} else if (Array.isArray(value)) {
+			for (const val of value) {
+				queryParams.append(key, val);
+			}
+			continue;
+		} else {
+			serializedValue = JSON.stringify(value);
+		}
+		queryParams.set(key, serializedValue);
+	}
+	const queryParamString = queryParams.toString();
+	return queryParamString.length > 0
+		? `?${queryParamString}`.replace(/\+/g, "%20")
+		: "";
+}
+
 /**
  * Normalize URL
  */
@@ -41,47 +85,14 @@ export function getURL(url: string, option?: BetterFetchOption) {
 
 	if (!basePath.endsWith("/")) basePath += "/";
 	let [path, urlQuery] = url.replace(basePath, "").split("?");
-	const queryParams = new URLSearchParams(urlQuery);
-	for (const [key, value] of Object.entries(query || {})) {
-		if (value == null) continue;
-		let serializedValue;
-		if (typeof value === "string") {
-			serializedValue = value;
-		} else if (Array.isArray(value)) {
-			for (const val of value) {
-				queryParams.append(key, val);
-			}
-			continue;
-		} else {
-			serializedValue = JSON.stringify(value);
-		}
-		queryParams.set(key, serializedValue);
-	}
-	const pathParams = new Map<string, string>();
-	if (params) {
-		if (Array.isArray(params)) {
-			const paramPaths = path.split("/").filter((p) => p.startsWith(":"));
-			for (const [index, key] of paramPaths.entries()) {
-				const value = params[index];
-				pathParams.set(key, String(value));
-			}
-		} else {
-			for (const [key, value] of Object.entries(params)) {
-				pathParams.set(`:${key}`, String(value));
-			}
-		}
-	}
+	const pathParams = getPathParams(path, params);
 
 	path = path
 		.split("/")
 		.map((segment) => resolvePathSegment(segment, pathParams))
 		.join("/");
 	path = path.replace(/^\/+/, "");
-	let queryParamString = queryParams.toString();
-	queryParamString =
-		queryParamString.length > 0
-			? `?${queryParamString}`.replace(/\+/g, "%20")
-			: "";
+	const queryParamString = serializeQuery(urlQuery, query);
 	if (!basePath.startsWith("http")) {
 		return `${basePath}${path}${queryParamString}`;
 	}
