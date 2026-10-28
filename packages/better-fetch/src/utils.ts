@@ -3,7 +3,7 @@ import { parseMethodModifier } from "./method";
 import type { StandardSchemaV1 } from "./standard-schema";
 import type { BetterFetchOption, FetchEsque } from "./types";
 
-const JSON_RE = /^application\/(?:[\w!#$%&*.^`~-]*\+)?json(;.+)?$/i;
+const JSON_RE = /^application\/(?:[\w!#$%&*.^`~+-]*\+)?json(;.+)?$/i;
 
 type RequestBody = Exclude<RequestInit["body"], undefined>;
 type RequestHeaders = RequestInit["headers"];
