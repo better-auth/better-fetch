@@ -335,6 +335,7 @@ describe("hooks", () => {
 					status: 500,
 				}),
 			async onError({ response }) {
+				if (!response) throw new Error("Expected an HTTP response");
 				errorResponseText = await response.text();
 			},
 			hookOptions: { cloneResponse: true },
@@ -358,6 +359,76 @@ describe("hooks", () => {
 		expect(res.data).toMatchObject({ message: "ok" });
 		expect(onRequest).toHaveBeenCalled();
 		expect(onResponse).toHaveBeenCalled();
+	});
+});
+
+describe("network-errors", () => {
+	it("returns network failures through onError", async () => {
+		const networkError = new TypeError("fetch failed");
+		const onError = vi.fn();
+		const fetch = createFetch({
+			customFetchImpl: async () => {
+				throw networkError;
+			},
+			onError,
+		});
+
+		const result = await fetch("https://example.com");
+
+		expect(result.error).toMatchObject({
+			status: 0,
+			statusText: "Network Error",
+			message: "fetch failed",
+			cause: networkError,
+		});
+		expect(onError).toHaveBeenCalledOnce();
+	});
+
+	it("throws a BetterFetchError for network failures when throw is enabled", async () => {
+		const fetch = createFetch({
+			customFetchImpl: async () => {
+				throw new TypeError("fetch failed");
+			},
+			throw: true,
+		});
+
+		await expect(fetch("https://example.com")).rejects.toMatchObject({
+			status: 0,
+			statusText: "Network Error",
+		});
+	});
+
+	it("retries network failures", async () => {
+		let attempts = 0;
+		const fetch = createFetch({
+			customFetchImpl: async () => {
+				attempts++;
+				if (attempts < 3) {
+					throw new TypeError("fetch failed");
+				}
+				return new Response(JSON.stringify({ success: true }));
+			},
+			retry: { type: "linear", attempts: 3, delay: 0 },
+		});
+
+		const result = await fetch("https://example.com");
+		expect(attempts).toBe(3);
+		expect(result.data).toEqual({ success: true });
+	});
+
+	it("preserves caller abort reasons", async () => {
+		const controller = new AbortController();
+		const reason = new Error("cancelled by caller");
+		const fetch = createFetch({
+			customFetchImpl: async (_input, init) => {
+				controller.abort(reason);
+				throw init?.signal?.reason;
+			},
+		});
+
+		await expect(
+			fetch("https://example.com", { signal: controller.signal }),
+		).rejects.toBe(reason);
 	});
 });
 

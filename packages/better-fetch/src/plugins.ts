@@ -20,9 +20,9 @@ export type SuccessContext<Res = any> = {
 	request: RequestContext;
 };
 export type ErrorContext = {
-	response: Response;
+	response?: Response;
 	request: RequestContext;
-	error: BetterFetchError & Record<string, any>;
+	error: { status: number; statusText: string } & Record<string, any>;
 };
 export interface FetchHooks<Res = any> {
 	/**
