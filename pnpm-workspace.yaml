@@ -7,3 +7,8 @@ allowBuilds:
   es5-ext: false
   esbuild: true
   lefthook: true
+
+autoDedupe: true
+
+lockfile:
+  includeResolutionSettings: true

@@ -159,8 +159,12 @@ snapshots:
 lockfileVersion: '9.0'
 
 settings:
+  autoDedupe: true
   autoInstallPeers: true
+  dedupeInjectedDeps: true
+  dedupePeerDependents: true
   excludeLinksFromLockfile: false
+  linkWorkspacePackages: false
 
 importers:
 
@@ -171,10 +175,10 @@ importers:
         version: 1.7.3
       tinyglobby:
         specifier: ^0.2.9
-        version: 0.2.9
+        version: 0.2.17
       vitest:
         specifier: ^1.5.0
-        version: 1.6.0(@types/node@26.4.1)(happy-dom@14.12.3)(jsdom@24.1.3)
+        version: 1.6.0(@types/node@26.4.1)(happy-dom@14.12.3)(jsdom@24.1.3(supports-color@8.1.1))(supports-color@8.1.1)
     devDependencies:
       bumpp:
         specifier: ^12.2.2
@@ -200,13 +204,13 @@ importers:
     devDependencies:
       '@types/bun':
         specifier: latest
-        version: 1.2.2
+        version: 1.4.4
 
   doc:
     dependencies:
       '@better-fetch/fetch':
         specifier: ^1.1.13
-        version: 1.1.13
+        version: 1.3.3
       '@better-fetch/logger':
         specifier: ^1.1.0
         version: 1.1.3
@@ -227,25 +231,25 @@ importers:
         version: 11.5.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       fumadocs-core:
         specifier: 12.4.2
-        version: 12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
       fumadocs-docgen:
         specifier: ^1.1.0
-        version: 1.2.0(typescript@5.6.2)
+        version: 1.2.0(supports-color@8.1.1)(typescript@5.6.2)
       fumadocs-mdx:
         specifier: 8.2.33
-        version: 8.2.33(fumadocs-core@12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+        version: 8.2.33(fumadocs-core@12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(supports-color@8.1.1)
       fumadocs-openapi:
         specifier: ^3.3.0
         version: 3.3.0
       fumadocs-twoslash:
         specifier: ^1.1.0
-        version: 1.1.3(fumadocs-ui@12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.12))(shiki@1.18.0)(typescript@5.6.2)
+        version: 1.1.3(fumadocs-ui@12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(tailwindcss@3.4.12))(shiki@1.18.0)(supports-color@8.1.1)(typescript@5.6.2)
       fumadocs-typescript:
         specifier: ^2.0.1
-        version: 2.1.0(typescript@5.6.2)
+        version: 2.1.0(supports-color@8.1.1)(typescript@5.6.2)
       fumadocs-ui:
         specifier: 12.4.2
-        version: 12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.12)
+        version: 12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(tailwindcss@3.4.12)
       next:
         specifier: ^14.2.4
         version: 14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -300,7 +304,7 @@ importers:
         version: 15.0.7(@types/react@18.3.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@types/bun':
         specifier: ^1.1.0
-        version: 1.1.10
+        version: 1.4.4
       '@types/node':
         specifier: ^20.11.30
         version: 20.14.10
@@ -309,13 +313,13 @@ importers:
         version: 9.5.2
       global-jsdom:
         specifier: ^24.0.0
-        version: 24.0.0(jsdom@24.1.3)
+        version: 24.0.0(jsdom@24.1.3(supports-color@8.1.1))
       h3:
         specifier: ^1.11.1
         version: 1.12.0
       jsdom:
         specifier: ^24.0.0
-        version: 24.1.3
+        version: 24.1.3(supports-color@8.1.1)
       listhen:
         specifier: ^1.7.2
         version: 1.7.2
@@ -327,7 +331,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^1.5.0
-        version: 1.6.0(@types/node@20.14.10)(happy-dom@14.12.3)(jsdom@24.1.3)
+        version: 1.6.0(@types/node@20.14.10)(happy-dom@14.12.3)(jsdom@24.1.3(supports-color@8.1.1))(supports-color@8.1.1)
       zod:
         specifier: ^3.24.1
         version: 3.24.1
@@ -349,7 +353,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^1.5.0
-        version: 1.6.0(@types/node@26.4.1)(happy-dom@14.12.3)(jsdom@24.1.3)
+        version: 1.6.0(@types/node@26.4.1)(happy-dom@14.12.3)(jsdom@24.1.3(supports-color@8.1.1))(supports-color@8.1.1)
 
   packages/typecheck-consumers:
     devDependencies:
@@ -395,8 +399,8 @@ packages:
     resolution: {integrity: sha512-VBj9MYyDb9tuLq7yzqjgzt6Q+IBQLrGZfdjOekyEirZPHxXWoTSGUTMrpsfi58Up73d13NfYLv8HT9vmznjzhQ==}
     engines: {node: '>=6.9.0'}
 
-  '@better-fetch/fetch@1.1.13':
-    resolution: {integrity: sha512-C1NtueyCx6tqVITOoxScEEQyFn0R0dpqQBHsuDBhRACa+sl7rY9oirCNpRWNnYu7FmVwTAY9BHbeRdvqSJI5Og==}
+  '@better-fetch/fetch@1.3.3':
+    resolution: {integrity: sha512-U6SlDt/GUWtK2JAxS/NhdoYTEim+EL1G5byz2TUj83KjLZBUpYzb5SmX0aXaCnbGkAjFKnV/o/0+cyXMbEcqqg==}
 
   '@better-fetch/logger@1.1.3':
     resolution: {integrity: sha512-GuT6bbE+g10eIdUwW5ctOikryAnvb8i/c5HHttKZu1OFygVV82pX8JxyobtZZV9Z8Md03qNEV0PvaUDbBd9sHQ==}
@@ -1711,11 +1715,8 @@ packages:
   '@types/aria-query@5.0.4':
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
 
-  '@types/bun@1.1.10':
-    resolution: {integrity: sha512-76KYVSwrHwr9zsnk6oLXOGs9KvyBg3U066GLO4rk6JZk1ypEPGCUDZ5yOiESyIHWs9cx9iC8r01utYN32XdmgA==}
-
-  '@types/bun@1.2.2':
-    resolution: {integrity: sha512-tr74gdku+AEDN5ergNiBnplr7hpDp3V1h7fqI2GcR/rsUaM39jpSeKH0TFibRvU0KwniRx5POgaYnaXbk0hU+w==}
+  '@types/bun@1.4.4':
+    resolution: {integrity: sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ==}
 
   '@types/debug@4.1.12':
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
@@ -1747,9 +1748,6 @@ packages:
   '@types/ms@0.7.34':
     resolution: {integrity: sha512-nG96G3Wp6acyAgJqGasjODb+acrI7KltPiRxzHPXnP3NgI28bpQDRv53olbqGXbfcgF5aiiHmO3xpwEpS5Ld9g==}
 
-  '@types/node@20.12.14':
-    resolution: {integrity: sha512-scnD59RpYD91xngrQQLGkE+6UrHUPzeKZWhhjBSa3HSkwjbQc38+q3RoIVEwxQGRw3M+j5hpNAM+lgV3cVormg==}
-
   '@types/node@20.14.10':
     resolution: {integrity: sha512-MdiXf+nDuMvY0gJKxyfZ7/6UFsETO7mGKF54MVD/ekJS6HdFtpZFBgrh6Pseu64XTb2MLyFPlbW6hj8HYRQNOQ==}
 
@@ -1770,9 +1768,6 @@ packages:
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
-
-  '@types/ws@8.5.12':
-    resolution: {integrity: sha512-3tPRkv1EtkDpzlgyKyI8pGsGZAGPEaXeu0DOj5DI25Ja91bdAYddYHbADRYVrZMRbfW+1l5YwXVDKohDJNQxkQ==}
 
   '@typescript/vfs@1.6.0':
     resolution: {integrity: sha512-hvJUjNVeBMp77qPINuUvYXj4FyWeeMMKZkxEATEU3hqBAQ7qdTBCUFT7Sp0Zu0faeEtFf+ldXxMEDr/bk73ISg==}
@@ -2050,14 +2045,11 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  bun-types@1.1.29:
-    resolution: {integrity: sha512-En3/TzSPMPyl5UlUB1MHzHpcrZDakTm7mS203eLoX1fBoEa3PW+aSS8GAqVJ7Is/m34Z5ogL+ECniLY0uDaCPw==}
-
-  bun-types@1.2.2:
-    resolution: {integrity: sha512-RCbMH5elr9gjgDGDhkTTugA21XtJAy/9jkKe/G3WR2q17VPGhcquf9Sir6uay9iW+7P/BV0CAHA1XlHXMAVKHg==}
-
   bun-types@1.4.0:
     resolution: {integrity: sha512-iIKw23BspnQQYd3prITOBxeUsxBHnwzX6YJfGMuNOZzeNcMmVqzIIVGRm1l69ogaPQmb4wB6BN8mA5bE9YuC5Q==}
+
+  bun-types@1.4.4:
+    resolution: {integrity: sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ==}
 
   busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
@@ -2264,9 +2256,6 @@ packages:
     resolution: {integrity: sha512-SUwdGfqdKOwxCPeVYjwSyRpJ7Z+fhpwIAtmCUdZIWZ/YP5R9WAsyuSgpLVDi9bjWoN2LXHNss/dk3urXtdQxGg==}
     engines: {node: '>=6'}
 
-  defu@6.1.4:
-    resolution: {integrity: sha512-mEQCMmwJu317oSz8CwdIOdwf3xMif1ttiM8LTufzc3g6kR+9Pe236twL8j3IYT1F7GfRgGcW6MWxzZjLIkuHIg==}
-
   defu@6.1.7:
     resolution: {integrity: sha512-7z22QmUWiQ/2d0KkdYmANbRUVABpZ9SNYyH5vx6PZ+nE5bcC0l7uFvEfHlyld/HcGBFTL536ClDt3DEcSlEJAQ==}
 
@@ -2436,14 +2425,6 @@ packages:
   fastq@1.17.1:
     resolution: {integrity: sha512-sRVD3lWVIXWg6By68ZN7vho9a1pQcN/WBFaAAsDDFzlJjvoGx0P8z7V1t72grFJfJhu3YPZBuu25f7Kaw2jN1w==}
 
-  fdir@6.4.2:
-    resolution: {integrity: sha512-KnhMXsKSPZlAhp7+IjUkRZKPb4fUyccpDrdFXbi4QL1qkmFh9kVY09Yox+n4MaOb3lHZ1Tv829C3oaaXoMYPDQ==}
-    peerDependencies:
-      picomatch: ^3 || ^4
-    peerDependenciesMeta:
-      picomatch:
-        optional: true
-
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
@@ -2598,6 +2579,7 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@8.1.0:
@@ -3233,6 +3215,7 @@ packages:
   next@14.2.13:
     resolution: {integrity: sha512-BseY9YNw8QJSwLYD7hlZzl6QVDoSFHL/URN5K64kVEVpCsSOWeyjbIGK+dZUaRViHTaMQX8aqmnn0PHBbGZezg==}
     engines: {node: '>=18.17.0'}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -3386,10 +3369,6 @@ packages:
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
-
-  picomatch@4.0.2:
-    resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
-    engines: {node: '>=12'}
 
   picomatch@4.0.5:
     resolution: {integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==}
@@ -3587,9 +3566,6 @@ packages:
   remark-gfm@4.0.0:
     resolution: {integrity: sha512-U92vJgBPkbw4Zfu/IiW2oTZLSL3Zpv+uI7My2eq8JxKgqraFdU8YUGicEJCEgSbeaG+QDFqIcwwfMTOEelPxuA==}
 
-  remark-mdx@3.0.0:
-    resolution: {integrity: sha512-O7yfjuC6ra3NHPbRVxfflafAj3LTwx3b73aBvkEFU5z4PsD6FD4vrqJAkE5iNGLz71GdjXfgRqm3SQ0h0VuE7g==}
-
   remark-mdx@3.0.1:
     resolution: {integrity: sha512-3Pz3yPQ5Rht2pM5R+0J2MrGoBSrzf+tJG94N+t/ilfdh8YLyyKYtidAYwTveB20BoHAcwIopOUqhcmh2F7hGYA==}
 
@@ -3677,11 +3653,6 @@ packages:
   section-matter@1.0.0:
     resolution: {integrity: sha512-vfD3pmTzGpufjScBh50YHKzEu2lxBWhVEHsNGoEXmCmn2hKGfeNLYMzCJpe8cD7gqX7TJluOVpBkAequ6dgMmA==}
     engines: {node: '>=4'}
-
-  semver@7.6.3:
-    resolution: {integrity: sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==}
-    engines: {node: '>=10'}
-    hasBin: true
 
   semver@7.8.5:
     resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
@@ -3837,6 +3808,7 @@ packages:
   tar@6.2.1:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   thenify-all@1.6.0:
     resolution: {integrity: sha512-RNxQH/qI8/t3thXJDwcstUO4zeqo64+Uy/+sNVRBx4Xn2OX+OZ9oP+iJnNFqplFra2ZUVeKCSa2oVWi3T4uVmA==}
@@ -3852,20 +3824,12 @@ packages:
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
-  tinyexec@1.2.4:
-    resolution: {integrity: sha512-SHf/r48b7vOrjve9PxJo3MN5v5yuyjHvdUcrQffT3WXMUfnGmHDVbC4k3sHJaJTgZCwpUplIaAo5ANtMyp3YHg==}
-    engines: {node: '>=18'}
-
   tinyexec@1.3.0:
     resolution: {integrity: sha512-QKAl9m8gWWGHV8jZcPeym6j+XULi6tOf1mT83WYJ4Lk2ytW/uwAWkrP0uFsdoYMdueVJ0qs26wZ+23xeB4ibNQ==}
     engines: {node: '>=18'}
 
   tinyglobby@0.2.17:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
-    engines: {node: '>=12.0.0'}
-
-  tinyglobby@0.2.9:
-    resolution: {integrity: sha512-8or1+BGEdk1Zkkw2ii16qSS7uVrQJPre5A9o/XkWPATkk23FZh/15BKFxPnlTy6vkljZxLqYCzzBMj30ZrSvjw==}
     engines: {node: '>=12.0.0'}
 
   tinypool@0.8.4:
@@ -3991,9 +3955,6 @@ packages:
 
   unenv@1.10.0:
     resolution: {integrity: sha512-wY5bskBQFL9n3Eca5XnhH6KbUo/tfvkwm9OpcdCvLaeA7piBNbavbOKJySEwQ1V0RH6HvNlSAFRTpvTqgKRQXQ==}
-
-  unified@11.0.4:
-    resolution: {integrity: sha512-apMPnyLjAX+ty4OrNap7yumyVAMlKx5IWU2wlzzUdYJO9A8f1p9m/gywF/GM2ZDFcjQPrx59Mc90KwmxsoklxQ==}
 
   unified@11.0.5:
     resolution: {integrity: sha512-xKvGhPWw3k84Qjh8bI3ZeJjqnyadK+GEFtazSfZv/rKeTkTjOJho6mFqh2SM96iIcZokxiOpg78GazTSg8+KHA==}
@@ -4213,11 +4174,6 @@ packages:
   yallist@4.0.0:
     resolution: {integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==}
 
-  yaml@2.5.1:
-    resolution: {integrity: sha512-bLQOjaX/ADgQ20isPJRvF0iRUHIxVhYvr53Of7wGcWlO2jvtUlH5m87DsmulFVxRpNLOnI4tB6p/oh8D7kpn9Q==}
-    engines: {node: '>= 14'}
-    hasBin: true
-
   yaml@2.9.0:
     resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
     engines: {node: '>= 14.6'}
@@ -4286,7 +4242,7 @@ snapshots:
     dependencies:
       regenerator-runtime: 0.14.1
 
-  '@better-fetch/fetch@1.1.13': {}
+  '@better-fetch/fetch@1.3.3': {}
 
   '@better-fetch/logger@1.1.3':
     dependencies:
@@ -4548,7 +4504,7 @@ snapshots:
 
   '@jsdevtools/ono@7.1.3': {}
 
-  '@mdx-js/mdx@3.0.1':
+  '@mdx-js/mdx@3.0.1(supports-color@8.1.1)':
     dependencies:
       '@types/estree': 1.0.6
       '@types/estree-jsx': 1.0.5
@@ -4560,15 +4516,15 @@ snapshots:
       estree-util-is-identifier-name: 3.0.0
       estree-util-to-js: 2.0.0
       estree-walker: 3.0.3
-      hast-util-to-estree: 3.1.0
-      hast-util-to-jsx-runtime: 2.3.0
+      hast-util-to-estree: 3.1.0(supports-color@8.1.1)
+      hast-util-to-jsx-runtime: 2.3.0(supports-color@8.1.1)
       markdown-extensions: 2.0.0
       periscopic: 3.1.0
-      remark-mdx: 3.0.0
-      remark-parse: 11.0.0
+      remark-mdx: 3.0.1(supports-color@8.1.1)
+      remark-parse: 11.0.0(supports-color@8.1.1)
       remark-rehype: 11.1.1
       source-map: 0.7.4
-      unified: 11.0.4
+      unified: 11.0.5
       unist-util-position-from-estree: 2.0.0
       unist-util-stringify-position: 4.0.0
       unist-util-visit: 5.0.0
@@ -5285,11 +5241,11 @@ snapshots:
     dependencies:
       shiki: 1.18.0
 
-  '@shikijs/twoslash@1.18.0(typescript@5.6.2)':
+  '@shikijs/twoslash@1.18.0(supports-color@8.1.1)(typescript@5.6.2)':
     dependencies:
       '@shikijs/core': 1.18.0
       '@shikijs/types': 1.18.0
-      twoslash: 0.2.11(typescript@5.6.2)
+      twoslash: 0.2.11(supports-color@8.1.1)(typescript@5.6.2)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -5350,13 +5306,9 @@ snapshots:
 
   '@types/aria-query@5.0.4': {}
 
-  '@types/bun@1.1.10':
+  '@types/bun@1.4.4':
     dependencies:
-      bun-types: 1.1.29
-
-  '@types/bun@1.2.2':
-    dependencies:
-      bun-types: 1.2.2
+      bun-types: 1.4.4
 
   '@types/debug@4.1.12':
     dependencies:
@@ -5386,10 +5338,6 @@ snapshots:
 
   '@types/ms@0.7.34': {}
 
-  '@types/node@20.12.14':
-    dependencies:
-      undici-types: 5.26.5
-
   '@types/node@20.14.10':
     dependencies:
       undici-types: 5.26.5
@@ -5413,11 +5361,7 @@ snapshots:
 
   '@types/unist@3.0.3': {}
 
-  '@types/ws@8.5.12':
-    dependencies:
-      '@types/node': 20.14.10
-
-  '@typescript/vfs@1.6.0(typescript@5.6.2)':
+  '@typescript/vfs@1.6.0(supports-color@8.1.1)(typescript@5.6.2)':
     dependencies:
       debug: 4.3.7(supports-color@8.1.1)
       typescript: 5.6.2
@@ -5533,7 +5477,7 @@ snapshots:
 
   acorn@8.12.1: {}
 
-  agent-base@7.1.1:
+  agent-base@7.1.1(supports-color@8.1.1):
     dependencies:
       debug: 4.3.7(supports-color@8.1.1)
     transitivePeerDependencies:
@@ -5645,23 +5589,18 @@ snapshots:
       js-yaml: 4.1.0
       jsonc-parser: 3.3.1
       prompts: 2.4.2
-      semver: 7.6.3
+      semver: 7.8.5
     transitivePeerDependencies:
       - magicast
 
-  bun-types@1.1.29:
-    dependencies:
-      '@types/node': 20.12.14
-      '@types/ws': 8.5.12
-
-  bun-types@1.2.2:
-    dependencies:
-      '@types/node': 20.14.10
-      '@types/ws': 8.5.12
-
   bun-types@1.4.0:
     dependencies:
+      '@types/node': 26.4.1
+
+  bun-types@1.4.4:
+    dependencies:
       '@types/node': 20.14.10
+      undici-types: 8.10.1
 
   busboy@1.6.0:
     dependencies:
@@ -5671,7 +5610,7 @@ snapshots:
     dependencies:
       chokidar: 3.6.0
       confbox: 0.1.7
-      defu: 6.1.4
+      defu: 6.1.7
       dotenv: 16.4.5
       giget: 1.2.3
       jiti: 1.21.6
@@ -5862,8 +5801,6 @@ snapshots:
   deep-eql@4.1.4:
     dependencies:
       type-detect: 4.1.0
-
-  defu@6.1.4: {}
 
   defu@6.1.7: {}
 
@@ -6073,10 +6010,6 @@ snapshots:
     dependencies:
       reusify: 1.0.4
 
-  fdir@6.4.2(picomatch@4.0.2):
-    optionalDependencies:
-      picomatch: 4.0.2
-
   fdir@6.5.0(picomatch@4.0.5):
     optionalDependencies:
       picomatch: 4.0.5
@@ -6134,7 +6067,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  fumadocs-core@12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  fumadocs-core@12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1):
     dependencies:
       '@formatjs/intl-localematcher': 0.5.4
       '@shikijs/rehype': 1.18.0
@@ -6147,9 +6080,9 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       react-remove-scroll: 2.6.0(@types/react@18.3.8)(react@18.3.1)
-      remark: 15.0.1
-      remark-gfm: 4.0.0
-      remark-mdx: 3.0.1
+      remark: 15.0.1(supports-color@8.1.1)
+      remark-gfm: 4.0.0(supports-color@8.1.1)
+      remark-mdx: 3.0.1(supports-color@8.1.1)
       scroll-into-view-if-needed: 3.1.0
       shiki: 1.18.0
       swr: 2.2.5(react@18.3.1)
@@ -6158,11 +6091,11 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  fumadocs-docgen@1.2.0(typescript@5.6.2):
+  fumadocs-docgen@1.2.0(supports-color@8.1.1)(typescript@5.6.2):
     dependencies:
       estree-util-value-to-estree: 3.1.2
-      fumadocs-typescript: 2.1.0(typescript@5.6.2)
-      hast-util-to-estree: 3.1.0
+      fumadocs-typescript: 2.1.0(supports-color@8.1.1)(typescript@5.6.2)
+      hast-util-to-estree: 3.1.0(supports-color@8.1.1)
       npm-to-yarn: 3.0.0
       unist-util-visit: 5.0.0
       zod: 3.24.1
@@ -6170,13 +6103,13 @@ snapshots:
       - supports-color
       - typescript
 
-  fumadocs-mdx@8.2.33(fumadocs-core@12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)):
+  fumadocs-mdx@8.2.33(fumadocs-core@12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(supports-color@8.1.1):
     dependencies:
-      '@mdx-js/mdx': 3.0.1
+      '@mdx-js/mdx': 3.0.1(supports-color@8.1.1)
       cross-spawn: 7.0.3
       estree-util-value-to-estree: 3.1.2
       fast-glob: 3.3.2
-      fumadocs-core: 12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      fumadocs-core: 12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
       gray-matter: 4.0.3
       next: 14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       zod: 3.24.1
@@ -6191,30 +6124,30 @@ snapshots:
       json-schema-to-typescript: 14.1.0
       openapi-sampler: 1.5.1
 
-  fumadocs-twoslash@1.1.3(fumadocs-ui@12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.12))(shiki@1.18.0)(typescript@5.6.2):
+  fumadocs-twoslash@1.1.3(fumadocs-ui@12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(tailwindcss@3.4.12))(shiki@1.18.0)(supports-color@8.1.1)(typescript@5.6.2):
     dependencies:
-      '@shikijs/twoslash': 1.18.0(typescript@5.6.2)
-      fumadocs-ui: 12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.12)
-      mdast-util-from-markdown: 2.0.1
-      mdast-util-gfm: 3.0.0
+      '@shikijs/twoslash': 1.18.0(supports-color@8.1.1)(typescript@5.6.2)
+      fumadocs-ui: 12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(tailwindcss@3.4.12)
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
+      mdast-util-gfm: 3.0.0(supports-color@8.1.1)
       mdast-util-to-hast: 13.2.0
       shiki: 1.18.0
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  fumadocs-typescript@2.1.0(typescript@5.6.2):
+  fumadocs-typescript@2.1.0(supports-color@8.1.1)(typescript@5.6.2):
     dependencies:
       fast-glob: 3.3.2
-      hast-util-to-jsx-runtime: 2.3.0
-      mdast-util-from-markdown: 2.0.1
-      mdast-util-gfm: 3.0.0
+      hast-util-to-jsx-runtime: 2.3.0(supports-color@8.1.1)
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
+      mdast-util-gfm: 3.0.0(supports-color@8.1.1)
       mdast-util-to-hast: 13.2.0
       typescript: 5.6.2
     transitivePeerDependencies:
       - supports-color
 
-  fumadocs-ui@12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.12):
+  fumadocs-ui@12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(tailwindcss@3.4.12):
     dependencies:
       '@radix-ui/react-accordion': 1.2.0(@types/react-dom@18.3.0)(@types/react@18.3.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-collapsible': 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -6226,7 +6159,7 @@ snapshots:
       '@tailwindcss/typography': 0.5.15(tailwindcss@3.4.12)
       class-variance-authority: 0.7.0
       cmdk: 1.0.0(@types/react-dom@18.3.0)(@types/react@18.3.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      fumadocs-core: 12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      fumadocs-core: 12.4.2(@types/react@18.3.8)(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
       lucide-react: 0.400.0(react@18.3.1)
       next: 14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next-themes: 0.3.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -6264,7 +6197,7 @@ snapshots:
     dependencies:
       citty: 0.1.6
       consola: 3.2.3
-      defu: 6.1.4
+      defu: 6.1.7
       node-fetch-native: 1.6.4
       nypm: 0.3.11
       ohash: 1.1.4
@@ -6298,9 +6231,9 @@ snapshots:
       minimatch: 5.1.6
       once: 1.4.0
 
-  global-jsdom@24.0.0(jsdom@24.1.3):
+  global-jsdom@24.0.0(jsdom@24.1.3(supports-color@8.1.1)):
     dependencies:
-      jsdom: 24.1.3
+      jsdom: 24.1.3(supports-color@8.1.1)
 
   graceful-fs@4.2.11: {}
 
@@ -6315,7 +6248,7 @@ snapshots:
     dependencies:
       cookie-es: 1.2.2
       crossws: 0.2.4
-      defu: 6.1.4
+      defu: 6.1.7
       destr: 2.0.3
       iron-webcrypto: 1.2.1
       ohash: 1.1.4
@@ -6340,7 +6273,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  hast-util-to-estree@3.1.0:
+  hast-util-to-estree@3.1.0(supports-color@8.1.1):
     dependencies:
       '@types/estree': 1.0.6
       '@types/estree-jsx': 1.0.5
@@ -6350,9 +6283,9 @@ snapshots:
       estree-util-attach-comments: 3.0.0
       estree-util-is-identifier-name: 3.0.0
       hast-util-whitespace: 3.0.0
-      mdast-util-mdx-expression: 2.0.1
-      mdast-util-mdx-jsx: 3.1.3
-      mdast-util-mdxjs-esm: 2.0.1
+      mdast-util-mdx-expression: 2.0.1(supports-color@8.1.1)
+      mdast-util-mdx-jsx: 3.1.3(supports-color@8.1.1)
+      mdast-util-mdxjs-esm: 2.0.1(supports-color@8.1.1)
       property-information: 6.5.0
       space-separated-tokens: 2.0.2
       style-to-object: 0.4.4
@@ -6375,7 +6308,7 @@ snapshots:
       stringify-entities: 4.0.4
       zwitch: 2.0.4
 
-  hast-util-to-jsx-runtime@2.3.0:
+  hast-util-to-jsx-runtime@2.3.0(supports-color@8.1.1):
     dependencies:
       '@types/estree': 1.0.6
       '@types/hast': 3.0.4
@@ -6384,9 +6317,9 @@ snapshots:
       devlop: 1.1.0
       estree-util-is-identifier-name: 3.0.0
       hast-util-whitespace: 3.0.0
-      mdast-util-mdx-expression: 2.0.1
-      mdast-util-mdx-jsx: 3.1.3
-      mdast-util-mdxjs-esm: 2.0.1
+      mdast-util-mdx-expression: 2.0.1(supports-color@8.1.1)
+      mdast-util-mdx-jsx: 3.1.3(supports-color@8.1.1)
+      mdast-util-mdxjs-esm: 2.0.1(supports-color@8.1.1)
       property-information: 6.5.0
       space-separated-tokens: 2.0.2
       style-to-object: 1.0.8
@@ -6413,18 +6346,18 @@ snapshots:
 
   html-void-elements@3.0.0: {}
 
-  http-proxy-agent@7.0.2:
+  http-proxy-agent@7.0.2(supports-color@8.1.1):
     dependencies:
-      agent-base: 7.1.1
+      agent-base: 7.1.1(supports-color@8.1.1)
       debug: 4.3.7(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
   http-shutdown@1.2.2: {}
 
-  https-proxy-agent@7.0.5:
+  https-proxy-agent@7.0.5(supports-color@8.1.1):
     dependencies:
-      agent-base: 7.1.1
+      agent-base: 7.1.1(supports-color@8.1.1)
       debug: 4.3.7(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
@@ -6540,15 +6473,15 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsdom@24.1.3:
+  jsdom@24.1.3(supports-color@8.1.1):
     dependencies:
       cssstyle: 4.1.0
       data-urls: 5.0.0
       decimal.js: 10.4.3
       form-data: 4.0.0
       html-encoding-sniffer: 4.0.0
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.5
+      http-proxy-agent: 7.0.2(supports-color@8.1.1)
+      https-proxy-agent: 7.0.5(supports-color@8.1.1)
       is-potential-custom-element-name: 1.0.1
       nwsapi: 2.2.12
       parse5: 7.1.2
@@ -6650,7 +6583,7 @@ snapshots:
       clipboardy: 4.0.0
       consola: 3.2.3
       crossws: 0.2.4
-      defu: 6.1.4
+      defu: 6.1.7
       get-port-please: 3.1.2
       h3: 1.12.0
       http-shutdown: 1.2.2
@@ -6724,14 +6657,14 @@ snapshots:
       unist-util-is: 6.0.0
       unist-util-visit-parents: 6.0.1
 
-  mdast-util-from-markdown@2.0.1:
+  mdast-util-from-markdown@2.0.1(supports-color@8.1.1):
     dependencies:
       '@types/mdast': 4.0.4
       '@types/unist': 3.0.3
       decode-named-character-reference: 1.0.2
       devlop: 1.1.0
       mdast-util-to-string: 4.0.0
-      micromark: 4.0.0
+      micromark: 4.0.0(supports-color@8.1.1)
       micromark-util-decode-numeric-character-reference: 2.0.1
       micromark-util-decode-string: 2.0.0
       micromark-util-normalize-identifier: 2.0.0
@@ -6749,67 +6682,67 @@ snapshots:
       mdast-util-find-and-replace: 3.0.1
       micromark-util-character: 2.1.0
 
-  mdast-util-gfm-footnote@2.0.0:
+  mdast-util-gfm-footnote@2.0.0(supports-color@8.1.1):
     dependencies:
       '@types/mdast': 4.0.4
       devlop: 1.1.0
-      mdast-util-from-markdown: 2.0.1
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
       mdast-util-to-markdown: 2.1.0
       micromark-util-normalize-identifier: 2.0.0
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-gfm-strikethrough@2.0.0:
+  mdast-util-gfm-strikethrough@2.0.0(supports-color@8.1.1):
     dependencies:
       '@types/mdast': 4.0.4
-      mdast-util-from-markdown: 2.0.1
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
       mdast-util-to-markdown: 2.1.0
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-gfm-table@2.0.0:
+  mdast-util-gfm-table@2.0.0(supports-color@8.1.1):
     dependencies:
       '@types/mdast': 4.0.4
       devlop: 1.1.0
       markdown-table: 3.0.3
-      mdast-util-from-markdown: 2.0.1
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
       mdast-util-to-markdown: 2.1.0
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-gfm-task-list-item@2.0.0:
+  mdast-util-gfm-task-list-item@2.0.0(supports-color@8.1.1):
     dependencies:
       '@types/mdast': 4.0.4
       devlop: 1.1.0
-      mdast-util-from-markdown: 2.0.1
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
       mdast-util-to-markdown: 2.1.0
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-gfm@3.0.0:
+  mdast-util-gfm@3.0.0(supports-color@8.1.1):
     dependencies:
-      mdast-util-from-markdown: 2.0.1
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
       mdast-util-gfm-autolink-literal: 2.0.1
-      mdast-util-gfm-footnote: 2.0.0
-      mdast-util-gfm-strikethrough: 2.0.0
-      mdast-util-gfm-table: 2.0.0
-      mdast-util-gfm-task-list-item: 2.0.0
+      mdast-util-gfm-footnote: 2.0.0(supports-color@8.1.1)
+      mdast-util-gfm-strikethrough: 2.0.0(supports-color@8.1.1)
+      mdast-util-gfm-table: 2.0.0(supports-color@8.1.1)
+      mdast-util-gfm-task-list-item: 2.0.0(supports-color@8.1.1)
       mdast-util-to-markdown: 2.1.0
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-mdx-expression@2.0.1:
+  mdast-util-mdx-expression@2.0.1(supports-color@8.1.1):
     dependencies:
       '@types/estree-jsx': 1.0.5
       '@types/hast': 3.0.4
       '@types/mdast': 4.0.4
       devlop: 1.1.0
-      mdast-util-from-markdown: 2.0.1
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
       mdast-util-to-markdown: 2.1.0
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-mdx-jsx@3.1.3:
+  mdast-util-mdx-jsx@3.1.3(supports-color@8.1.1):
     dependencies:
       '@types/estree-jsx': 1.0.5
       '@types/hast': 3.0.4
@@ -6817,7 +6750,7 @@ snapshots:
       '@types/unist': 3.0.3
       ccount: 2.0.1
       devlop: 1.1.0
-      mdast-util-from-markdown: 2.0.1
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
       mdast-util-to-markdown: 2.1.0
       parse-entities: 4.0.1
       stringify-entities: 4.0.4
@@ -6826,23 +6759,23 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-mdx@3.0.0:
+  mdast-util-mdx@3.0.0(supports-color@8.1.1):
     dependencies:
-      mdast-util-from-markdown: 2.0.1
-      mdast-util-mdx-expression: 2.0.1
-      mdast-util-mdx-jsx: 3.1.3
-      mdast-util-mdxjs-esm: 2.0.1
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
+      mdast-util-mdx-expression: 2.0.1(supports-color@8.1.1)
+      mdast-util-mdx-jsx: 3.1.3(supports-color@8.1.1)
+      mdast-util-mdxjs-esm: 2.0.1(supports-color@8.1.1)
       mdast-util-to-markdown: 2.1.0
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-mdxjs-esm@2.0.1:
+  mdast-util-mdxjs-esm@2.0.1(supports-color@8.1.1):
     dependencies:
       '@types/estree-jsx': 1.0.5
       '@types/hast': 3.0.4
       '@types/mdast': 4.0.4
       devlop: 1.1.0
-      mdast-util-from-markdown: 2.0.1
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
       mdast-util-to-markdown: 2.1.0
     transitivePeerDependencies:
       - supports-color
@@ -7138,7 +7071,7 @@ snapshots:
 
   micromark-util-types@2.0.0: {}
 
-  micromark@4.0.0:
+  micromark@4.0.0(supports-color@8.1.1):
     dependencies:
       '@types/debug': 4.1.12
       debug: 4.3.7(supports-color@8.1.1)
@@ -7400,8 +7333,6 @@ snapshots:
 
   picomatch@2.3.1: {}
 
-  picomatch@4.0.2: {}
-
   picomatch@4.0.5: {}
 
   pify@2.3.0: {}
@@ -7429,7 +7360,7 @@ snapshots:
   postcss-load-config@4.0.2(postcss@8.4.47):
     dependencies:
       lilconfig: 3.1.2
-      yaml: 2.5.1
+      yaml: 2.9.0
     optionalDependencies:
       postcss: 8.4.47
 
@@ -7501,7 +7432,7 @@ snapshots:
 
   rc9@2.1.2:
     dependencies:
-      defu: 6.1.4
+      defu: 6.1.7
       destr: 2.0.3
 
   react-dom@18.3.1(react@18.3.1):
@@ -7585,35 +7516,28 @@ snapshots:
 
   regex@4.3.2: {}
 
-  remark-gfm@4.0.0:
+  remark-gfm@4.0.0(supports-color@8.1.1):
     dependencies:
       '@types/mdast': 4.0.4
-      mdast-util-gfm: 3.0.0
+      mdast-util-gfm: 3.0.0(supports-color@8.1.1)
       micromark-extension-gfm: 3.0.0
-      remark-parse: 11.0.0
+      remark-parse: 11.0.0(supports-color@8.1.1)
       remark-stringify: 11.0.0
       unified: 11.0.5
     transitivePeerDependencies:
       - supports-color
 
-  remark-mdx@3.0.0:
+  remark-mdx@3.0.1(supports-color@8.1.1):
     dependencies:
-      mdast-util-mdx: 3.0.0
+      mdast-util-mdx: 3.0.0(supports-color@8.1.1)
       micromark-extension-mdxjs: 3.0.0
     transitivePeerDependencies:
       - supports-color
 
-  remark-mdx@3.0.1:
-    dependencies:
-      mdast-util-mdx: 3.0.0
-      micromark-extension-mdxjs: 3.0.0
-    transitivePeerDependencies:
-      - supports-color
-
-  remark-parse@11.0.0:
+  remark-parse@11.0.0(supports-color@8.1.1):
     dependencies:
       '@types/mdast': 4.0.4
-      mdast-util-from-markdown: 2.0.1
+      mdast-util-from-markdown: 2.0.1(supports-color@8.1.1)
       micromark-util-types: 2.0.0
       unified: 11.0.5
     transitivePeerDependencies:
@@ -7631,12 +7555,12 @@ snapshots:
     dependencies:
       '@types/mdast': 4.0.4
       mdast-util-to-markdown: 2.1.0
-      unified: 11.0.4
+      unified: 11.0.5
 
-  remark@15.0.1:
+  remark@15.0.1(supports-color@8.1.1):
     dependencies:
       '@types/mdast': 4.0.4
-      remark-parse: 11.0.0
+      remark-parse: 11.0.0(supports-color@8.1.1)
       remark-stringify: 11.0.0
       unified: 11.0.5
     transitivePeerDependencies:
@@ -7739,8 +7663,6 @@ snapshots:
     dependencies:
       extend-shallow: 2.0.1
       kind-of: 6.0.3
-
-  semver@7.6.3: {}
 
   semver@7.8.5: {}
 
@@ -7920,19 +7842,12 @@ snapshots:
 
   tinybench@2.9.0: {}
 
-  tinyexec@1.2.4: {}
-
   tinyexec@1.3.0: {}
 
   tinyglobby@0.2.17:
     dependencies:
       fdir: 6.5.0(picomatch@4.0.5)
       picomatch: 4.0.5
-
-  tinyglobby@0.2.9:
-    dependencies:
-      fdir: 6.4.2(picomatch@4.0.2)
-      picomatch: 4.0.2
 
   tinypool@0.8.4: {}
 
@@ -7974,7 +7889,7 @@ snapshots:
       rolldown: 1.2.0
       rolldown-plugin-dts: 0.27.9(rolldown@1.2.0)(typescript@6.0.3)
       semver: 7.8.5
-      tinyexec: 1.2.4
+      tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tree-kill: 1.2.2
       unconfig-core: 7.5.0
@@ -7998,9 +7913,9 @@ snapshots:
 
   twoslash-protocol@0.2.11: {}
 
-  twoslash@0.2.11(typescript@5.6.2):
+  twoslash@0.2.11(supports-color@8.1.1)(typescript@5.6.2):
     dependencies:
-      '@typescript/vfs': 1.6.0(typescript@5.6.2)
+      '@typescript/vfs': 1.6.0(supports-color@8.1.1)(typescript@5.6.2)
       twoslash-protocol: 0.2.11
       typescript: 5.6.2
     transitivePeerDependencies:
@@ -8040,20 +7955,10 @@ snapshots:
   unenv@1.10.0:
     dependencies:
       consola: 3.2.3
-      defu: 6.1.4
+      defu: 6.1.7
       mime: 3.0.0
       node-fetch-native: 1.6.4
       pathe: 1.1.2
-
-  unified@11.0.4:
-    dependencies:
-      '@types/unist': 3.0.3
-      bail: 2.0.2
-      devlop: 1.1.0
-      extend: 3.0.2
-      is-plain-obj: 4.1.0
-      trough: 2.2.0
-      vfile: 6.0.3
 
   unified@11.0.5:
     dependencies:
@@ -8146,7 +8051,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.2
 
-  vite-node@1.6.0(@types/node@20.14.10):
+  vite-node@1.6.0(@types/node@20.14.10)(supports-color@8.1.1):
     dependencies:
       cac: 6.7.14
       debug: 4.3.7(supports-color@8.1.1)
@@ -8164,7 +8069,7 @@ snapshots:
       - supports-color
       - terser
 
-  vite-node@1.6.0(@types/node@26.4.1):
+  vite-node@1.6.0(@types/node@26.4.1)(supports-color@8.1.1):
     dependencies:
       cac: 6.7.14
       debug: 4.3.7(supports-color@8.1.1)
@@ -8200,7 +8105,7 @@ snapshots:
       '@types/node': 26.4.1
       fsevents: 2.3.3
 
-  vitest@1.6.0(@types/node@20.14.10)(happy-dom@14.12.3)(jsdom@24.1.3):
+  vitest@1.6.0(@types/node@20.14.10)(happy-dom@14.12.3)(jsdom@24.1.3(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
       '@vitest/expect': 1.6.0
       '@vitest/runner': 1.6.0
@@ -8220,12 +8125,12 @@ snapshots:
       tinybench: 2.9.0
       tinypool: 0.8.4
       vite: 5.4.7(@types/node@20.14.10)
-      vite-node: 1.6.0(@types/node@20.14.10)
+      vite-node: 1.6.0(@types/node@20.14.10)(supports-color@8.1.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 20.14.10
       happy-dom: 14.12.3
-      jsdom: 24.1.3
+      jsdom: 24.1.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - less
       - lightningcss
@@ -8236,7 +8141,7 @@ snapshots:
       - supports-color
       - terser
 
-  vitest@1.6.0(@types/node@26.4.1)(happy-dom@14.12.3)(jsdom@24.1.3):
+  vitest@1.6.0(@types/node@26.4.1)(happy-dom@14.12.3)(jsdom@24.1.3(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
       '@vitest/expect': 1.6.0
       '@vitest/runner': 1.6.0
@@ -8256,12 +8161,12 @@ snapshots:
       tinybench: 2.9.0
       tinypool: 0.8.4
       vite: 5.4.7(@types/node@26.4.1)
-      vite-node: 1.6.0(@types/node@26.4.1)
+      vite-node: 1.6.0(@types/node@26.4.1)(supports-color@8.1.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 26.4.1
       happy-dom: 14.12.3
-      jsdom: 24.1.3
+      jsdom: 24.1.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - less
       - lightningcss
@@ -8327,8 +8232,6 @@ snapshots:
   y18n@5.0.8: {}
 
   yallist@4.0.0: {}
-
-  yaml@2.5.1: {}
 
   yaml@2.9.0: {}
 
