@@ -11,6 +11,6 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    uses: better-auth/shared-workflows/.github/workflows/release-bumpp-library.yml@b574d729adc6831942ea65d4bcf991f0af4f2705
+    uses: better-auth/shared-workflows/.github/workflows/release-bumpp-library.yml@3181777f24e51b1ac88fd7cfe6dfcebccd9212d1
     with:
       version-file: packages/better-fetch/package.json
