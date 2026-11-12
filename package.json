@@ -14,12 +14,12 @@
 	},
 	"dependencies": {
 		"@biomejs/biome": "1.7.3",
-		"tinyglobby": "^0.2.9",
-		"vitest": "^1.5.0"
+		"tinyglobby": "^0.2.17",
+		"vitest": "^5.1.0"
 	},
 	"devDependencies": {
-		"bumpp": "^12.2.2",
-		"lefthook": "^2.1.4",
+		"bumpp": "^12.3.0",
+		"lefthook": "^2.2.2",
 		"tsdown": "0.22.9"
 	},
 	"packageManager": "pnpm@12.18.0"
