@@ -22,20 +22,14 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"@happy-dom/global-registrator": "^14.7.1",
-		"@testing-library/dom": "^10.0.0",
-		"@testing-library/react": "^15.0.3",
-		"@types/bun": "^1.1.0",
-		"@types/node": "^20.11.30",
-		"bumpp": "^9.4.1",
-		"global-jsdom": "^24.0.0",
-		"h3": "^1.11.1",
-		"jsdom": "^24.0.0",
-		"listhen": "^1.7.2",
-		"mocha": "^10.4.0",
+		"@types/bun": "^1.4.4",
+		"@types/node": "^20.14.10",
+		"bumpp": "^12.3.0",
+		"h3": "^1.15.11",
+		"listhen": "^1.10.1",
 		"typescript": "^6.0.3",
-		"vitest": "^1.5.0",
-		"zod": "^3.24.1"
+		"vitest": "^5.1.0",
+		"zod": "^4.6.7"
 	},
 	"exports": {
 		".": {
