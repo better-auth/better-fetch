@@ -1,7 +1,12 @@
 import { createApp, toNodeListener } from "h3";
 import { type Listener, listen } from "listhen";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { BetterFetchError, betterFetch, createFetch } from "..";
+import {
+	BetterFetchError,
+	type FetchEsque,
+	betterFetch,
+	createFetch,
+} from "..";
 import { router } from "./test-router";
 
 describe("fetch", () => {
@@ -210,6 +215,86 @@ describe("fetch", () => {
 				signal: controller.signal,
 			}),
 		).rejects.toThrow(/aborted/);
+	});
+
+	const hangingFetch: FetchEsque = (_url, init) =>
+		new Promise<Response>((_, reject) => {
+			const signal = init?.signal;
+			if (!signal) {
+				return;
+			}
+			if (signal.aborted) {
+				reject(signal.reason);
+				return;
+			}
+			signal.addEventListener("abort", () => reject(signal.reason), {
+				once: true,
+			});
+		});
+
+	it("aborts on timeout when no signal is passed", async () => {
+		await expect(
+			betterFetch(getURL("ok"), {
+				timeout: 50,
+				customFetchImpl: hangingFetch,
+			}),
+		).rejects.toThrow(/aborted/);
+	});
+
+	it("aborts on timeout when a signal is also passed", async () => {
+		const controller = new AbortController();
+		await expect(
+			betterFetch(getURL("ok"), {
+				timeout: 50,
+				signal: controller.signal,
+				customFetchImpl: hangingFetch,
+			}),
+		).rejects.toThrow(/aborted/);
+		expect(controller.signal.aborted).toBe(false);
+	});
+
+	it("aborts with the caller's reason when the signal fires before the timeout", async () => {
+		const controller = new AbortController();
+		const reason = new Error("cancelled by the caller");
+		setTimeout(() => controller.abort(reason), 10);
+		await expect(
+			betterFetch(getURL("ok"), {
+				timeout: 5000,
+				signal: controller.signal,
+				customFetchImpl: hangingFetch,
+			}),
+		).rejects.toBe(reason);
+	});
+
+	it("clears the timeout when the caller aborts before the deadline", async () => {
+		const controller = new AbortController();
+		const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
+		setTimeout(() => controller.abort(), 10);
+		await expect(
+			betterFetch(getURL("ok"), {
+				timeout: 5000,
+				signal: controller.signal,
+				customFetchImpl: hangingFetch,
+			}),
+		).rejects.toThrow(/aborted/);
+		expect(clearTimeoutSpy).toHaveBeenCalled();
+		clearTimeoutSpy.mockRestore();
+	});
+
+	it("detaches the forwarded abort listener once the request settles", async () => {
+		const controller = new AbortController();
+		const removeEventListener = vi.spyOn(
+			controller.signal,
+			"removeEventListener",
+		);
+		const { data } = await betterFetch(getURL("ok"), {
+			signal: controller.signal,
+		});
+		expect(data).toBe("ok");
+		expect(removeEventListener).toHaveBeenCalledWith(
+			"abort",
+			expect.any(Function),
+		);
 	});
 
 	it("resolves a dynamic path param", async () => {
