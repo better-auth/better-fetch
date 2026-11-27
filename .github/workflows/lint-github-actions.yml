@@ -19,14 +19,14 @@ jobs:
   lint:
     permissions:
       contents: read
-    uses: better-auth/shared-workflows/.github/workflows/lint-github-actions.yml@3181777f24e51b1ac88fd7cfe6dfcebccd9212d1
+    uses: better-auth/shared-workflows/.github/workflows/lint-github-actions.yml@93cb569f835297529614ed443414b4a372d2dd7b
 
   zizmor:
     if: github.event_name == 'pull_request'
     permissions:
       actions: read
       contents: read
-    uses: better-auth/shared-workflows/.github/workflows/zizmor.yml@3181777f24e51b1ac88fd7cfe6dfcebccd9212d1
+    uses: better-auth/shared-workflows/.github/workflows/zizmor.yml@93cb569f835297529614ed443414b4a372d2dd7b
 
   zizmor-code-scanning:
     if: github.event_name == 'push'
@@ -34,4 +34,4 @@ jobs:
       actions: read
       contents: read
       security-events: write
-    uses: better-auth/shared-workflows/.github/workflows/zizmor-code-scanning.yml@3181777f24e51b1ac88fd7cfe6dfcebccd9212d1
+    uses: better-auth/shared-workflows/.github/workflows/zizmor-code-scanning.yml@93cb569f835297529614ed443414b4a372d2dd7b
